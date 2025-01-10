@@ -1,132 +1,140 @@
-from typing import Any, Dict, List, Optional, Tuple
-
-import hydra
-import lightning as L
-import rootutils
+import os
 import torch
-from lightning import Callback, LightningDataModule, LightningModule, Trainer
-from lightning.pytorch.loggers import Logger
-from omegaconf import DictConfig
-
-rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-# ------------------------------------------------------------------------------------ #
-# the setup_root above is equivalent to:
-# - adding project root dir to PYTHONPATH
-#       (so you don't need to force user to install project as a package)
-#       (necessary before importing any local modules e.g. `from src import utils`)
-# - setting up PROJECT_ROOT environment variable
-#       (which is used as a base for paths in "configs/paths/default.yaml")
-#       (this way all filepaths are the same no matter where you run the code)
-# - loading environment variables from ".env" in root dir
-#
-# you can remove it if you:
-# 1. either install project as a package or move entry files to project root dir
-# 2. set `root_dir` to "." in "configs/paths/default.yaml"
-#
-# more info: https://github.com/ashleve/rootutils
-# ------------------------------------------------------------------------------------ #
-
-from src.utils import (
-    RankedLogger,
-    extras,
-    get_metric_value,
-    instantiate_callbacks,
-    instantiate_loggers,
-    log_hyperparameters,
-    task_wrapper,
-)
-
-log = RankedLogger(__name__, rank_zero_only=True)
+import torch.nn as nn
+from tqdm import tqdm
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
 
 
-@task_wrapper
-def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Trains the model. Can additionally evaluate on a testset, using best weights obtained during
-    training.
+import warnings
+warnings.filterwarnings("ignore")
 
-    This method is wrapped in optional @task_wrapper decorator, that controls the behavior during
-    failure. Useful for multiruns, saving info about the crash, etc.
+from option import args
+from efficient_sam.build_efficient_sam import build_efficient_sam_vitt, build_efficient_sam_vits
+from segment_anything import sam_model_registry
+#from dataset.Segmentation_other import DatasetSegmentation, sample_data
+from dataset.Segmentation import DatasetSegmentation, sample_data
+from src.utils.logging_utils import dice_loss
+from src.models.Network import Network
 
-    :param cfg: A DictConfig configuration composed by Hydra.
-    :return: A tuple with metrics and dict with all instantiated objects.
-    """
-    # set seed for random number generators in pytorch, numpy and python.random
-    if cfg.get("seed"):
-        L.seed_everything(cfg.seed, workers=True)
+class Trainer():
+    def __init__(self):
+        super(Trainer, self).__init__()
+        self.dice_loss = dice_loss
+        self.ce_loss = torch.nn.BCELoss()
+        self.mse_loss = torch.nn.MSELoss()
+    
+    def seg_loss(self, pred, gt):
+        loss = self.ce_loss(pred, gt) + 0.5 * self.dice_loss(pred, gt) + self.mse_loss(pred, gt)
+        return loss
+    
+    def train(self):
+        # init
+        checkpoint_dir = os.path.join(args.exp_dir, args.exp_name, args.chekpoints)
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
 
-    log.info(f"Instantiating datamodule <{cfg.data._target_}>")
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
+        # dataloader
+        dataset_polyp_seg = DatasetSegmentation(args, args.polyp_dir)
+        dataloader_polyp_seg = DataLoader(dataset_polyp_seg, batch_size=args.batch_size, shuffle=True,
+                                        num_workers=args.num_workers, pin_memory=True)
+        dataloader_polyp_seg = sample_data(dataloader_polyp_seg)
 
-    log.info(f"Instantiating model <{cfg.model._target_}>")
-    model: LightningModule = hydra.utils.instantiate(cfg.model)
+        # network  
+        model = Network(args)
+        model = model.cuda()
+        if args.sam == "vit_b":
+            SAM_model = sam_model_registry["vit_b"](checkpoint=args.sam_path_b)
+        elif args.sam == "vit_h":
+            SAM_model = sam_model_registry["vit_h"](checkpoint=args.sam_path_h)
+        elif args.sam == "efficient_sam_vitt":
+            SAM_model = build_efficient_sam_vitt()
+        SAM_model = SAM_model.cuda()
+        SAM_model.eval()
 
-    log.info("Instantiating callbacks...")
-    callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
+        # optimizer
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        for param in SAM_model.parameters():
+            param.requires_grad = False
+        #  train LN
+        param_names_to_save=[]
+        for name, param in SAM_model.named_parameters():
+            if 'image_encoder.neck.3'  in name or 'image_encoder.neck.1' in name:
+            # if 'image_encoder.neck.3'  in name or 'image_encoder.neck.1' in name or 'norm' in name:
+            # if 'norm' in name:
+                param_names_to_save.append(name)
+                param.requires_grad = True
 
-    log.info("Instantiating loggers...")
-    logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
+        pbar = tqdm(range(1, args.iterations+1))
+        lmbda = 0.1
 
-    log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
-    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
+        for itr in pbar:
+            model.train()
 
-    object_dict = {
-        "cfg": cfg,
-        "datamodule": datamodule,
-        "model": model,
-        "callbacks": callbacks,
-        "logger": logger,
-        "trainer": trainer,
-    }
+            # train polyp segmentation
+            img, gt = next(dataloader_polyp_seg)
+            img, gt = img.cuda(), gt.cuda()
+            gt = torch.stack([transforms.Resize(256)(image) for image in gt])
 
-    if logger:
-        log.info("Logging hyperparameters!")
-        log_hyperparameters(object_dict)
+            image_embeddings, interm_embeddings = SAM_model.image_encoder(img)
+            pred, iou_pred, uncertainty_p = model(img, image_embeddings, interm_embeddings, multimask_output=False)
 
-    if cfg.get("train"):
-        log.info("Starting training!")
-        trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
+            # U_p + U_i
+            ones = torch.ones(iou_pred.shape).cuda()
+            confidence = (iou_pred + (ones - uncertainty_p.mean(dim=(2, 3)))) / 2
+            # Make sure we don't have any numerical instability
+            eps = 1e-12
+            pred = torch.clamp(pred, 0. + eps, 1. - eps)
+            confidence = torch.clamp(confidence, 0. + eps, 1. - eps)
 
-    train_metrics = trainer.callback_metrics
+            # Randomly set half of the confidences to 1 (i.e. no hints)
+            b = Variable(torch.bernoulli(torch.Tensor(confidence.size()).uniform_(0, 1))).cuda()
+            pred_new = torch.zeros(pred.shape).cuda() 
+            for i in range(pred.shape[0]):
+                # P' = c * P + (1-c) * Y
+                pred_new[i] = confidence[i] * pred[i] + (1 - confidence[i]) * gt[i] if b[i] else pred[i]
+            
+            optimizer.zero_grad()
+            confidence_loss = torch.mean(-torch.log(confidence))
+            loss = self.seg_loss(pred_new, gt)  + (lmbda * confidence_loss)
 
-    if cfg.get("test"):
-        log.info("Starting testing!")
-        ckpt_path = trainer.checkpoint_callback.best_model_path
-        if ckpt_path == "":
-            log.warning("Best ckpt not found! Using current weights for testing...")
-            ckpt_path = None
-        trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
-        log.info(f"Best ckpt path: {ckpt_path}")
+            if args.budget > confidence_loss.item():
+                lmbda = lmbda / 1.01
+            elif args.budget <= confidence_loss.item():
+                lmbda = lmbda / 0.99
+                
+            loss.backward()
 
-    test_metrics = trainer.callback_metrics
+            nn.utils.clip_grad_norm_(model.parameters(), args.clipping)
+            optimizer.step()
+            pbar.set_postfix(loss=loss.item())
+            pbar.update(1)
 
-    # merge train and test metrics
-    metric_dict = {**train_metrics, **test_metrics}
+            # # Params
+            # total_params = 0
+            # for name, param in SAM_model.state_dict().items():
+            #     if name in param_names_to_save:
+            #         num_params = torch.numel(param)
+            #         total_params += num_params
+            # for name, param in model.state_dict().items():
+            #     num_params = torch.numel(param)
+            #     total_params += num_params
+            # print(f"Total number of parameters: {total_params}")
 
-    return metric_dict, object_dict
-
-
-@hydra.main(version_base="1.3", config_path="../configs", config_name="train.yaml")
-def main(cfg: DictConfig) -> Optional[float]:
-    """Main entry point for training.
-
-    :param cfg: DictConfig configuration composed by Hydra.
-    :return: Optional[float] with optimized metric value.
-    """
-    # apply extra utilities
-    # (e.g. ask for tags if none are provided in cfg, print cfg tree, etc.)
-    extras(cfg)
-
-    # train the model
-    metric_dict, _ = train(cfg)
-
-    # safely retrieve metric value for hydra-based hyperparameter optimization
-    metric_value = get_metric_value(
-        metric_dict=metric_dict, metric_name=cfg.get("optimized_metric")
-    )
-
-    # return optimized metric
-    return metric_value
+            args.iterations, args.save_iter = int(args.iterations), int(args.save_iter)
+            # if itr % args.save_iter == 0 or itr == args.iterations:
+            if itr >= args.save_iter*25 and (itr % args.save_iter == 0 or itr == args.iterations):
+                save_file = os.path.join(checkpoint_dir, f'{str(itr).zfill(7)}.pth')
+                checkpoint = {
+                    'model_state_dict': model.state_dict(),
+                    'sam_model_state_dict': {k: v for k, v in SAM_model.state_dict().items() if k in param_names_to_save}
+                }
+                torch.save(checkpoint, save_file)
+                print('checkpoint saved at: ', save_file)
+    
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    Trainer = Trainer()
+    Trainer.train()

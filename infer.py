@@ -12,8 +12,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from option import args
-from dataset.Segmentation_other import DatasetSegmentationInfer
-from model.Network import Network
+#from dataset.Segmentation_other import DatasetSegmentationInfer
+from dataset.Segmentation import DatasetSegmentationInfer
+from src.models.Network import Network
 from segment_anything import sam_model_registry
 from efficient_sam.build_efficient_sam import build_efficient_sam_vitt, build_efficient_sam_vits
 
