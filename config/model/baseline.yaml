@@ -1,0 +1,10 @@
+_target_: model.ASPS
+
+vit_settings:
+  name: "efficient_sam_vitt"
+  checkpoint: ${paths.pretrained_dir}/efficient_sam_vitt.pt
+
+cnn_settings:
+  model: "large"
+  checkpoint: ${paths.pretrained_dir}/mscan_l.pth
+  image_size_cnn: 320
