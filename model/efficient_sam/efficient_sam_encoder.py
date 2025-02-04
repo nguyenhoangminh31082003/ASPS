@@ -90,9 +90,9 @@ class Mlp(nn.Module):
     def __init__(
         self,
         in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
+        hidden_features =   None,
+        out_features    =   None,
+        act_layer       =   nn.GELU,
     ):
         super().__init__()
         out_features = out_features or in_features
@@ -113,10 +113,10 @@ class Block(nn.Module):
         self,
         dim,
         num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        act_layer=nn.GELU,
+        mlp_ratio   =   4.0,
+        qkv_bias    =   False,
+        qk_scale    =   None,
+        act_layer   =   nn.GELU,
     ):
         super().__init__()
         self.norm1 = nn.LayerNorm(dim, eps=1e-6)
@@ -177,16 +177,16 @@ def get_abs_pos(abs_pos: torch.Tensor, has_cls_token: bool, hw: List[int]) -> to
 class ImageEncoderViT(nn.Module):
     def __init__(
         self,
-        img_size: int,
-        patch_size: int,
-        in_chans: int,
-        patch_embed_dim: int,
+        img_size:           int,
+        patch_size:         int,
+        in_chans:           int,
+        patch_embed_dim:    int,
         normalization_type: str,
-        depth: int,
-        num_heads: int,
-        mlp_ratio: float,
-        neck_dims: List[int],
-        act_layer: Type[nn.Module],
+        depth:              int,
+        num_heads:          int,
+        mlp_ratio:          float,
+        neck_dims:          List[int],
+        act_layer:          Type[nn.Module],
     ) -> None:
         """
         Args:

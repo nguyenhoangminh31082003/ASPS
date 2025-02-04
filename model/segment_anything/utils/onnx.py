@@ -24,32 +24,35 @@ class SamOnnxModel(nn.Module):
 
     def __init__(
         self,
-        model: Sam,
-        return_single_mask: bool,
-        use_stability_score: bool = False,
-        return_extra_metrics: bool = False,
+        model:                  Sam,
+        return_single_mask:     bool,
+        use_stability_score:    bool = False,
+        return_extra_metrics:   bool = False,
     ) -> None:
         super().__init__()
-        self.mask_decoder = model.mask_decoder
-        self.model = model
-        self.img_size = model.image_encoder.img_size
-        self.return_single_mask = return_single_mask
-        self.use_stability_score = use_stability_score
+        self.mask_decoder           = model.mask_decoder
+        self.model                  = model
+        self.img_size               = model.image_encoder.img_size
+        self.return_single_mask     = return_single_mask
+        self.use_stability_score    = use_stability_score
         self.stability_score_offset = 1.0
-        self.return_extra_metrics = return_extra_metrics
+        self.return_extra_metrics   = return_extra_metrics
 
     @staticmethod
     def resize_longest_image_size(
-        input_image_size: torch.Tensor, longest_side: int
+        input_image_size:   torch.Tensor, 
+        longest_side:       int
     ) -> torch.Tensor:
-        input_image_size = input_image_size.to(torch.float32)
-        scale = longest_side / torch.max(input_image_size)
-        transformed_size = scale * input_image_size
-        transformed_size = torch.floor(transformed_size + 0.5).to(torch.int64)
+        input_image_size    = input_image_size.to(torch.float32)
+        scale               = longest_side / torch.max(input_image_size)
+        transformed_size    = scale * input_image_size
+        transformed_size    = torch.floor(transformed_size + 0.5).to(torch.int64)
         return transformed_size
 
     def _embed_points(
-        self, point_coords: torch.Tensor, point_labels: torch.Tensor
+        self, 
+        point_coords: torch.Tensor, 
+        point_labels: torch.Tensor
     ) -> torch.Tensor:
         point_coords = point_coords + 0.5
         point_coords = point_coords / self.img_size
@@ -111,21 +114,21 @@ class SamOnnxModel(nn.Module):
     @torch.no_grad()
     def forward(
         self,
-        image_embeddings: torch.Tensor,
-        point_coords: torch.Tensor,
-        point_labels: torch.Tensor,
-        mask_input: torch.Tensor,
-        has_mask_input: torch.Tensor,
-        orig_im_size: torch.Tensor,
+        image_embeddings:   torch.Tensor,
+        point_coords:       torch.Tensor,
+        point_labels:       torch.Tensor,
+        mask_input:         torch.Tensor,
+        has_mask_input:     torch.Tensor,
+        orig_im_size:       torch.Tensor,
     ):
-        sparse_embedding = self._embed_points(point_coords, point_labels)
-        dense_embedding = self._embed_masks(mask_input, has_mask_input)
+        sparse_embedding    = self._embed_points(point_coords, point_labels)
+        dense_embedding     = self._embed_masks(mask_input, has_mask_input)
 
-        masks, scores = self.model.mask_decoder.predict_masks(
-            image_embeddings=image_embeddings,
-            image_pe=self.model.prompt_encoder.get_dense_pe(),
-            sparse_prompt_embeddings=sparse_embedding,
-            dense_prompt_embeddings=dense_embedding,
+        masks, scores       = self.model.mask_decoder.predict_masks(
+            image_embeddings            =   image_embeddings,
+            image_pe                    =   self.model.prompt_encoder.get_dense_pe(),
+            sparse_prompt_embeddings    =   sparse_embedding,
+            dense_prompt_embeddings     =   dense_embedding,
         )
 
         if self.use_stability_score:

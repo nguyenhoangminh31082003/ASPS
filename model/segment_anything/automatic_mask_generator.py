@@ -35,20 +35,20 @@ from .utils.amg import (
 class SamAutomaticMaskGenerator:
     def __init__(
         self,
-        model: Sam,
-        points_per_side: Optional[int] = 32,
-        points_per_batch: int = 64,
-        pred_iou_thresh: float = 0.88,
-        stability_score_thresh: float = 0.95,
-        stability_score_offset: float = 1.0,
-        box_nms_thresh: float = 0.7,
-        crop_n_layers: int = 0,
-        crop_nms_thresh: float = 0.7,
-        crop_overlap_ratio: float = 512 / 1500,
-        crop_n_points_downscale_factor: int = 1,
-        point_grids: Optional[List[np.ndarray]] = None,
-        min_mask_region_area: int = 0,
-        output_mode: str = "binary_mask",
+        model:                          Sam,
+        points_per_side:                Optional[int]               =   32,
+        points_per_batch:               int                         =   64,
+        pred_iou_thresh:                float                       =   0.88,
+        stability_score_thresh:         float                       =   0.95,
+        stability_score_offset:         float                       =   1.0,
+        box_nms_thresh:                 float                       =   0.7,
+        crop_n_layers:                  int                         =   0,
+        crop_nms_thresh:                float                       =   0.7,
+        crop_overlap_ratio:             float                       =   512 / 1500,
+        crop_n_points_downscale_factor: int                         =   1,
+        point_grids:                    Optional[List[np.ndarray]]  =   None,
+        min_mask_region_area:           int                         =   0,
+        output_mode:                    str                         =   "binary_mask",
     ) -> None:
         """
         Using a SAM model, generates masks for the entire image.
@@ -120,18 +120,18 @@ class SamAutomaticMaskGenerator:
         if min_mask_region_area > 0:
             import cv2  # type: ignore # noqa: F401
 
-        self.predictor = SamPredictor(model)
-        self.points_per_batch = points_per_batch
-        self.pred_iou_thresh = pred_iou_thresh
-        self.stability_score_thresh = stability_score_thresh
-        self.stability_score_offset = stability_score_offset
-        self.box_nms_thresh = box_nms_thresh
-        self.crop_n_layers = crop_n_layers
-        self.crop_nms_thresh = crop_nms_thresh
-        self.crop_overlap_ratio = crop_overlap_ratio
+        self.predictor                      = SamPredictor(model)
+        self.points_per_batch               = points_per_batch
+        self.pred_iou_thresh                = pred_iou_thresh
+        self.stability_score_thresh         = stability_score_thresh
+        self.stability_score_offset         = stability_score_offset
+        self.box_nms_thresh                 = box_nms_thresh
+        self.crop_n_layers                  = crop_n_layers
+        self.crop_nms_thresh                = crop_nms_thresh
+        self.crop_overlap_ratio             = crop_overlap_ratio
         self.crop_n_points_downscale_factor = crop_n_points_downscale_factor
-        self.min_mask_region_area = min_mask_region_area
-        self.output_mode = output_mode
+        self.min_mask_region_area           = min_mask_region_area
+        self.output_mode                    = output_mode
 
     @torch.no_grad()
     def generate(self, image: np.ndarray) -> List[Dict[str, Any]]:
@@ -224,10 +224,10 @@ class SamAutomaticMaskGenerator:
 
     def _process_crop(
         self,
-        image: np.ndarray,
-        crop_box: List[int],
+        image:          np.ndarray,
+        crop_box:       List[int],
         crop_layer_idx: int,
-        orig_size: Tuple[int, ...],
+        orig_size:      Tuple[int, ...],
     ) -> MaskData:
         # Crop the image and calculate embeddings
         x0, y0, x1, y1 = crop_box
@@ -265,10 +265,10 @@ class SamAutomaticMaskGenerator:
 
     def _process_batch(
         self,
-        points: np.ndarray,
-        im_size: Tuple[int, ...],
-        crop_box: List[int],
-        orig_size: Tuple[int, ...],
+        points:     np.ndarray,
+        im_size:    Tuple[int, ...],
+        crop_box:   List[int],
+        orig_size:  Tuple[int, ...],
     ) -> MaskData:
         orig_h, orig_w = orig_size
 
@@ -322,7 +322,9 @@ class SamAutomaticMaskGenerator:
 
     @staticmethod
     def postprocess_small_regions(
-        mask_data: MaskData, min_area: int, nms_thresh: float
+        mask_data:  MaskData, 
+        min_area:   int, 
+        nms_thresh: float
     ) -> MaskData:
         """
         Removes small disconnected regions and holes in masks, then reruns
@@ -341,10 +343,10 @@ class SamAutomaticMaskGenerator:
         for rle in mask_data["rles"]:
             mask = rle_to_mask(rle)
 
-            mask, changed = remove_small_regions(mask, min_area, mode="holes")
-            unchanged = not changed
-            mask, changed = remove_small_regions(mask, min_area, mode="islands")
-            unchanged = unchanged and not changed
+            mask, changed   = remove_small_regions(mask, min_area, mode="holes")
+            unchanged       = not changed
+            mask, changed   = remove_small_regions(mask, min_area, mode="islands")
+            unchanged       = unchanged and not changed
 
             new_masks.append(torch.as_tensor(mask).unsqueeze(0))
             # Give score=0 to changed masks and score=1 to unchanged masks

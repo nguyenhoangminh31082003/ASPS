@@ -17,17 +17,17 @@ from .two_way_transformer import TwoWayAttentionBlock, TwoWayTransformer
 
 
 class EfficientSam(nn.Module):
-    mask_threshold: float = 0.0
-    image_format: str = "RGB"
+    mask_threshold: float   =   0.0
+    image_format:   str     =   "RGB"
 
     def __init__(
         self,
-        image_encoder: ImageEncoderViT,
-        prompt_encoder: PromptEncoder,
-        decoder_max_num_input_points: int,
-        mask_decoder: MaskDecoder,
-        pixel_mean: List[float] = [0.485, 0.456, 0.406],
-        pixel_std: List[float] = [0.229, 0.224, 0.225],
+        image_encoder:                  ImageEncoderViT,
+        prompt_encoder:                 PromptEncoder,
+        decoder_max_num_input_points:   int,
+        mask_decoder:                   MaskDecoder,
+        pixel_mean:                     List[float]         = [0.485, 0.456, 0.406],
+        pixel_std:                      List[float]         = [0.229, 0.224, 0.225],
     ) -> None:
         """
         SAM predicts object masks from an image and input prompts.
@@ -42,24 +42,24 @@ class EfficientSam(nn.Module):
           pixel_std (list(float)): Std values for normalizing pixels in the input image.
         """
         super().__init__()
-        self.image_encoder = image_encoder
-        self.prompt_encoder = prompt_encoder
-        self.decoder_max_num_input_points = decoder_max_num_input_points
-        self.mask_decoder = mask_decoder
+        self.image_encoder                  =   image_encoder
+        self.prompt_encoder                 =   prompt_encoder
+        self.decoder_max_num_input_points   =   decoder_max_num_input_points
+        self.mask_decoder                   =   mask_decoder
         self.register_buffer("pixel_mean", torch.Tensor(pixel_mean).view(1, 3, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(pixel_std).view(1, 3, 1, 1), False)
 
     @torch.jit.export
     def predict_masks(
         self,
-        image_embeddings: torch.Tensor,
-        batched_points: torch.Tensor,
-        batched_point_labels: torch.Tensor,
-        multimask_output: bool,
-        input_h: int,
-        input_w: int,
-        output_h: int = -1,
-        output_w: int = -1,
+        image_embeddings:       torch.Tensor,
+        batched_points:         torch.Tensor,
+        batched_point_labels:   torch.Tensor,
+        multimask_output:       bool,
+        input_h:                int,
+        input_w:                int,
+        output_h:               int             = -1,
+        output_w:               int             = -1,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Predicts masks given image embeddings and prompts. This only runs the decoder.
@@ -174,10 +174,10 @@ class EfficientSam(nn.Module):
 
     def forward(
         self,
-        batched_images: torch.Tensor,
-        batched_points: torch.Tensor,
-        batched_point_labels: torch.Tensor,
-        scale_to_original_image_size: bool = True,
+        batched_images:                 torch.Tensor,
+        batched_points:                 torch.Tensor,
+        batched_point_labels:           torch.Tensor,
+        scale_to_original_image_size:   bool            =   True,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Predicts masks end-to-end from provided images and prompts.
@@ -200,11 +200,11 @@ class EfficientSam(nn.Module):
             image_embeddings,
             batched_points,
             batched_point_labels,
-            multimask_output=True,
-            input_h=input_h,
-            input_w=input_w,
-            output_h=input_h if scale_to_original_image_size else -1,
-            output_w=input_w if scale_to_original_image_size else -1,
+            multimask_output        =   True,
+            input_h                 =   input_h,
+            input_w                 =   input_w,
+            output_h                =   input_h if scale_to_original_image_size else -1,
+            output_w                =   input_w if scale_to_original_image_size else -1,
         )
 
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
@@ -219,22 +219,22 @@ class EfficientSam(nn.Module):
 
 
 def build_efficient_sam(encoder_patch_embed_dim, encoder_num_heads, checkpoint=None):
-    img_size = 1024
-    encoder_patch_size = 16
-    encoder_depth = 12
-    encoder_mlp_ratio = 4.0
-    encoder_neck_dims = [256, 256]
-    decoder_max_num_input_points = 6
-    decoder_transformer_depth = 2
-    decoder_transformer_mlp_dim = 2048
-    decoder_num_heads = 8
-    decoder_upscaling_layer_dims = [64, 32]
-    num_multimask_outputs = 3
-    iou_head_depth = 3
-    iou_head_hidden_dim = 256
-    activation = "gelu"
-    normalization_type = "layer_norm"
-    normalize_before_activation = False
+    img_size                        =   1024
+    encoder_patch_size              =   16
+    encoder_depth                   =   12
+    encoder_mlp_ratio               =   4.0
+    encoder_neck_dims               =   [256, 256]
+    decoder_max_num_input_points    =   6
+    decoder_transformer_depth       =   2
+    decoder_transformer_mlp_dim     =   2048
+    decoder_num_heads               =   8
+    decoder_upscaling_layer_dims    =   [64, 32]
+    num_multimask_outputs           =   3
+    iou_head_depth                  =   3
+    iou_head_hidden_dim             =   256
+    activation                      =   "gelu"
+    normalization_type              =   "layer_norm"
+    normalize_before_activation     =   False
 
     assert activation == "relu" or activation == "gelu"
     if activation == "relu":
@@ -243,49 +243,49 @@ def build_efficient_sam(encoder_patch_embed_dim, encoder_num_heads, checkpoint=N
         activation_fn = nn.GELU
 
     image_encoder = ImageEncoderViT(
-        img_size=img_size,
-        patch_size=encoder_patch_size,
-        in_chans=3,
-        patch_embed_dim=encoder_patch_embed_dim,
-        normalization_type=normalization_type,
-        depth=encoder_depth,
-        num_heads=encoder_num_heads,
-        mlp_ratio=encoder_mlp_ratio,
-        neck_dims=encoder_neck_dims,
-        act_layer=activation_fn,
+        img_size            =   img_size,
+        patch_size          =   encoder_patch_size,
+        in_chans            =   3,
+        patch_embed_dim     =   encoder_patch_embed_dim,
+        normalization_type  =   normalization_type,
+        depth               =   encoder_depth,
+        num_heads           =   encoder_num_heads,
+        mlp_ratio           =   encoder_mlp_ratio,
+        neck_dims           =   encoder_neck_dims,
+        act_layer           =   activation_fn,
     )
 
     image_embedding_size = image_encoder.image_embedding_size
     encoder_transformer_output_dim = image_encoder.transformer_output_dim
 
     sam = EfficientSam(
-        image_encoder=image_encoder,
-        prompt_encoder=PromptEncoder(
-            embed_dim=encoder_transformer_output_dim,
-            image_embedding_size=(image_embedding_size, image_embedding_size),
-            input_image_size=(img_size, img_size),
+        image_encoder   =   image_encoder,
+        prompt_encoder  =   PromptEncoder(
+            embed_dim               =   encoder_transformer_output_dim,
+            image_embedding_size    =   (image_embedding_size, image_embedding_size),
+            input_image_size        =   (img_size, img_size),
         ),
         decoder_max_num_input_points=decoder_max_num_input_points,
-        mask_decoder=MaskDecoder(
-            transformer_dim=encoder_transformer_output_dim,
-            transformer=TwoWayTransformer(
-                depth=decoder_transformer_depth,
-                embedding_dim=encoder_transformer_output_dim,
-                num_heads=decoder_num_heads,
-                mlp_dim=decoder_transformer_mlp_dim,
-                activation=activation_fn,
-                normalize_before_activation=normalize_before_activation,
+        mask_decoder    =   MaskDecoder(
+            transformer_dim =   encoder_transformer_output_dim,
+            transformer     =   TwoWayTransformer(
+                depth                       =   decoder_transformer_depth,
+                embedding_dim               =   encoder_transformer_output_dim,
+                num_heads                   =   decoder_num_heads,
+                mlp_dim                     =   decoder_transformer_mlp_dim,
+                activation                  =   activation_fn,
+                normalize_before_activation =   normalize_before_activation,
             ),
-            num_multimask_outputs=num_multimask_outputs,
-            activation=activation_fn,
-            normalization_type=normalization_type,
-            normalize_before_activation=normalize_before_activation,
-            iou_head_depth=iou_head_depth - 1,
-            iou_head_hidden_dim=iou_head_hidden_dim,
-            upscaling_layer_dims=decoder_upscaling_layer_dims,
+            num_multimask_outputs       =   num_multimask_outputs,
+            activation                  =   activation_fn,
+            normalization_type          =   normalization_type,
+            normalize_before_activation =   normalize_before_activation,
+            iou_head_depth              =   iou_head_depth - 1,
+            iou_head_hidden_dim         =   iou_head_hidden_dim,
+            upscaling_layer_dims        =   decoder_upscaling_layer_dims,
         ),
-        pixel_mean=[0.485, 0.456, 0.406],
-        pixel_std=[0.229, 0.224, 0.225],
+        pixel_mean  =   [0.485, 0.456, 0.406],
+        pixel_std   =   [0.229, 0.224, 0.225],
     )
     if checkpoint is not None:
         with open(checkpoint, "rb") as f:

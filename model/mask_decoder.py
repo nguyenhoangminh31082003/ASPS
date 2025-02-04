@@ -18,10 +18,10 @@ from .transformer import Attention, TwoWayTransformer
 class MLP(nn.Module):
     def __init__(
         self,
-        input_dim: int,
-        hidden_dim: int,
-        output_dim: int,
-        num_layers: int,
+        input_dim:      int,
+        hidden_dim:     int,
+        output_dim:     int,
+        num_layers:     int,
         sigmoid_output: bool = False,
     ) -> None:
         super().__init__()
@@ -90,8 +90,8 @@ class features_feat(nn.Module):
     def __init__(
         self,
         vit_dim,
-        transformer_dim=256,
-        cnn_dim=256,
+        transformer_dim =   256,
+        cnn_dim         =   256,
     ) -> None:
         super().__init__()
         self.embedding_encoder = nn.Sequential(
@@ -120,9 +120,9 @@ class features_feat(nn.Module):
 
     def forward(
         self,
-        cnn_feature: torch.Tensor,
-        image_embeddings: torch.Tensor,
-        interm_embeddings: torch.Tensor,
+        cnn_feature:        torch.Tensor,
+        image_embeddings:   torch.Tensor,
+        interm_embeddings:  torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         vit_features = interm_embeddings[2].permute(
             0, 3, 1, 2
@@ -141,26 +141,26 @@ class MaskDecoder(nn.Module):
     def __init__(
         self,
         model_type,
-        transformer_dim=256,
-        cnn_dim=256,
-        transformer=TwoWayTransformer(
-            depth=2,
-            embedding_dim=256,
-            mlp_dim=2048,
-            num_heads=8,
+        transformer_dim         =   256,
+        cnn_dim                 =   256,
+        transformer             =   TwoWayTransformer(
+            depth           =   2,
+            embedding_dim   =   256,
+            mlp_dim         =   2048,
+            num_heads       =   8,
         ),
-        num_multimask_outputs=3,
-        activation=nn.GELU,
-        iou_head_depth=3,
-        iou_head_hidden_dim=256,
+        num_multimask_outputs   =   3,
+        activation              =   nn.GELU,
+        iou_head_depth          =   3,
+        iou_head_hidden_dim     =   256,
     ) -> None:
         super().__init__()
         self.transformer = transformer
         self.num_multimask_outputs = num_multimask_outputs
 
-        self.iou_token = nn.Embedding(1, transformer_dim)
-        self.num_mask_tokens = num_multimask_outputs + 1
-        self.mask_tokens = nn.Embedding(self.num_mask_tokens, transformer_dim)
+        self.iou_token          = nn.Embedding(1, transformer_dim)
+        self.num_mask_tokens    = num_multimask_outputs + 1
+        self.mask_tokens        = nn.Embedding(self.num_mask_tokens, transformer_dim)
 
         self.output_upscaling = nn.Sequential(
             nn.ConvTranspose2d(transformer_dim, transformer_dim // 4, kernel_size=2, stride=2),
@@ -203,20 +203,20 @@ class MaskDecoder(nn.Module):
 
     def forward(
         self,
-        cnn_feature: torch.Tensor,
-        image_embeddings: torch.Tensor,
-        multimask_output: bool,
-        interm_embeddings: torch.Tensor,
+        cnn_feature:        torch.Tensor,
+        image_embeddings:   torch.Tensor,
+        multimask_output:   bool,
+        interm_embeddings:  torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         fusion_features = self.feature_fusion(cnn_feature, image_embeddings, interm_embeddings)
-        batch_len = len(image_embeddings)
-        masks = []
-        iou_preds = []
+        batch_len       = len(image_embeddings)
+        masks           = []
+        iou_preds       = []
         for i_batch in range(batch_len):
             mask, iou_pred = self.predict_masks(
-                image_embeddings=image_embeddings[i_batch].unsqueeze(0),
-                fusion_feature=fusion_features[i_batch].unsqueeze(0),
-                cnn_feature=cnn_feature[i_batch].unsqueeze(0),
+                image_embeddings    =   image_embeddings[i_batch].unsqueeze(0),
+                fusion_feature      =   fusion_features[i_batch].unsqueeze(0),
+                cnn_feature         =   cnn_feature[i_batch].unsqueeze(0),
             )
             masks.append(mask)
             iou_preds.append(iou_pred)
@@ -233,9 +233,9 @@ class MaskDecoder(nn.Module):
 
     def predict_masks(
         self,
-        image_embeddings: torch.Tensor,
-        fusion_feature: torch.Tensor,
-        cnn_feature: torch.Tensor,
+        image_embeddings:   torch.Tensor,
+        fusion_feature:     torch.Tensor,
+        cnn_feature:        torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Predicts masks. See 'forward' for more details."""
         # Concatenate output tokens

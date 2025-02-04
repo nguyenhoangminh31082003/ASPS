@@ -210,22 +210,22 @@ class MaskDecoder(nn.Module):
         self.output_hypernetworks_mlps = nn.ModuleList(
             [
                 MLPBlock(
-                    input_dim=transformer_dim,
-                    hidden_dim=transformer_dim,
-                    output_dim=output_dim_after_upscaling,
-                    num_layers=2,
-                    act=activation,
+                    input_dim   =   transformer_dim,
+                    hidden_dim  =   transformer_dim,
+                    output_dim  =   output_dim_after_upscaling,
+                    num_layers  =   2,
+                    act         =   activation,
                 )
                 for i in range(self.num_mask_tokens)
             ]
         )
 
         self.iou_prediction_head = MLPBlock(
-            input_dim=transformer_dim,
-            hidden_dim=iou_head_hidden_dim,
-            output_dim=self.num_mask_tokens,
-            num_layers=iou_head_depth,
-            act=activation,
+            input_dim   =   transformer_dim,
+            hidden_dim  =   iou_head_hidden_dim,
+            output_dim  =   self.num_mask_tokens,
+            num_layers  =   iou_head_depth,
+            act         =   activation,
         )
 
     def forward(

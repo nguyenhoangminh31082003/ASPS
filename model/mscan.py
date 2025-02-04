@@ -30,24 +30,36 @@ def build_mscan(cfg):
     else:
         raise ValueError("Unknown MSCAN model")
 
-    init_cfg = dict(type="Pretrained", checkpoint=cfg.checkpoint)
+    init_cfg = dict(
+        type        =   "Pretrained", 
+        checkpoint  =   cfg.checkpoint
+    )
+    
     return MSCAN(
-        embed_dims=embed_dims, drop_path_rate=drop_path_rate, depths=depths, init_cfg=init_cfg
+        embed_dims      =   embed_dims, 
+        drop_path_rate  =   drop_path_rate, 
+        depths          =   depths, 
+        init_cfg        =   init_cfg
     )
 
 
 class Mlp(BaseModule):
     def __init__(
-        self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.0
+        self, 
+        in_features, 
+        hidden_features =   None, 
+        out_features    =   None, 
+        act_layer       =   nn.GELU, 
+        drop            =   0.0
     ):
         super().__init__()
-        out_features = out_features or in_features
+        out_features    = out_features or in_features
         hidden_features = hidden_features or in_features
-        self.fc1 = nn.Conv2d(in_features, hidden_features, 1)
-        self.dwconv = DWConv(hidden_features)
-        self.act = act_layer()
-        self.fc2 = nn.Conv2d(hidden_features, out_features, 1)
-        self.drop = nn.Dropout(drop)
+        self.fc1        = nn.Conv2d(in_features, hidden_features, 1)
+        self.dwconv     = DWConv(hidden_features)
+        self.act        = act_layer()
+        self.fc2        = nn.Conv2d(hidden_features, out_features, 1)
+        self.drop       = nn.Dropout(drop)
 
     def forward(self, x):
         x = self.fc1(x)
@@ -63,18 +75,29 @@ class Mlp(BaseModule):
 
 class StemConv(BaseModule):
     def __init__(
-        self, in_channels, out_channels, norm_cfg=dict(type="SyncBN", requires_grad=True)
+        self, 
+        in_channels, 
+        out_channels, 
+        norm_cfg    =   dict(type="SyncBN", requires_grad=True)
     ):
         super().__init__()
 
         self.proj = nn.Sequential(
             nn.Conv2d(
-                in_channels, out_channels // 2, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)
+                in_channels, 
+                out_channels // 2, 
+                kernel_size =   (3, 3), 
+                stride      =   (2, 2), 
+                padding     =   (1, 1)
             ),
             build_norm_layer(norm_cfg, out_channels // 2)[1],
             nn.GELU(),
             nn.Conv2d(
-                out_channels // 2, out_channels, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)
+                out_channels // 2,
+                out_channels, 
+                kernel_size     =   (3, 3), 
+                stride          =   (2, 2), 
+                padding         =   (1, 1)
             ),
             build_norm_layer(norm_cfg, out_channels)[1],
         )
@@ -126,11 +149,11 @@ class AttentionModule(BaseModule):
 class SpatialAttention(BaseModule):
     def __init__(self, d_model):
         super().__init__()
-        self.d_model = d_model
-        self.proj_1 = nn.Conv2d(d_model, d_model, 1)
-        self.activation = nn.GELU()
-        self.spatial_gating_unit = AttentionModule(d_model)
-        self.proj_2 = nn.Conv2d(d_model, d_model, 1)
+        self.d_model                = d_model
+        self.proj_1                 = nn.Conv2d(d_model, d_model, 1)
+        self.activation             = nn.GELU()
+        self.spatial_gating_unit    = AttentionModule(d_model)
+        self.proj_2                 = nn.Conv2d(d_model, d_model, 1)
 
     def forward(self, x):
         shortcut = x.clone()
@@ -147,20 +170,23 @@ class Block(BaseModule):
     def __init__(
         self,
         dim,
-        mlp_ratio=4.0,
-        drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_cfg=dict(type="SyncBN", requires_grad=True),
+        mlp_ratio   =   4.0,
+        drop        =   0.0,
+        drop_path   =   0.0,
+        act_layer   =   nn.GELU,
+        norm_cfg    =   dict(type="SyncBN", requires_grad=True),
     ):
         super().__init__()
-        self.norm1 = build_norm_layer(norm_cfg, dim)[1]
-        self.attn = SpatialAttention(dim)
-        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        self.norm2 = build_norm_layer(norm_cfg, dim)[1]
-        mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop
+        self.norm1      = build_norm_layer(norm_cfg, dim)[1]
+        self.attn       = SpatialAttention(dim)
+        self.drop_path  = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
+        self.norm2      = build_norm_layer(norm_cfg, dim)[1]
+        mlp_hidden_dim  = int(dim * mlp_ratio)
+        self.mlp        = Mlp(
+            in_features     =   dim, 
+            hidden_features =   mlp_hidden_dim, 
+            act_layer       =   act_layer, 
+            drop            =   drop
         )
         layer_scale_init_value = 1e-2
         self.layer_scale_1 = nn.Parameter(
@@ -188,11 +214,11 @@ class OverlapPatchEmbed(BaseModule):
 
     def __init__(
         self,
-        patch_size=7,
-        stride=4,
-        in_chans=3,
-        embed_dim=768,
-        norm_cfg=dict(type="SyncBN", requires_grad=True),
+        patch_size  =   7,
+        stride      =   4,
+        in_chans    =   3,
+        embed_dim   =   768,
+        norm_cfg    =   dict(type="SyncBN", requires_grad=True),
     ):
         super().__init__()
         patch_size = to_2tuple(patch_size)
@@ -200,9 +226,9 @@ class OverlapPatchEmbed(BaseModule):
         self.proj = nn.Conv2d(
             in_chans,
             embed_dim,
-            kernel_size=patch_size,
-            stride=stride,
-            padding=(patch_size[0] // 2, patch_size[1] // 2),
+            kernel_size =   patch_size,
+            stride      =   stride,
+            padding     =   (patch_size[0] // 2, patch_size[1] // 2),
         )
         self.norm = build_norm_layer(norm_cfg, embed_dim)[1]
 
@@ -219,16 +245,16 @@ class OverlapPatchEmbed(BaseModule):
 class MSCAN(BaseModule):
     def __init__(
         self,
-        in_chans=3,
-        embed_dims=None,
-        mlp_ratios=None,
-        drop_rate=0.0,
-        drop_path_rate=0.1,
-        depths=None,
-        num_stages=4,
-        norm_cfg=dict(type="BN", requires_grad=True),
-        pretrained=None,
-        init_cfg=dict(type="Pretrained"),
+        in_chans        =   3,
+        embed_dims      =   None,
+        mlp_ratios      =   None,
+        drop_rate       =   0.0,
+        drop_path_rate  =   0.1,
+        depths          =   None,
+        num_stages      =   4,
+        norm_cfg        =   dict(type="BN", requires_grad=True),
+        pretrained      =   None,
+        init_cfg        =   dict(type="Pretrained"),
     ):
         if embed_dims is None:
             embed_dims = [64, 128, 320, 512]

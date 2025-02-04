@@ -8,11 +8,11 @@ from torch import nn
 class MLPBlock(nn.Module):
     def __init__(
         self,
-        input_dim: int,
+        input_dim:  int,
         hidden_dim: int,
         output_dim: int,
         num_layers: int,
-        act: Type[nn.Module],
+        act:        Type[nn.Module],
     ) -> None:
         super().__init__()
         self.num_layers = num_layers

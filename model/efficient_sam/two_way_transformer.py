@@ -10,13 +10,13 @@ from .mlp import MLPBlock
 class TwoWayTransformer(nn.Module):
     def __init__(
         self,
-        depth: int,
-        embedding_dim: int,
-        num_heads: int,
-        mlp_dim: int,
-        activation: Type[nn.Module],
-        normalize_before_activation: bool,
-        attention_downsample_rate: int = 2,
+        depth:                          int,
+        embedding_dim:                  int,
+        num_heads:                      int,
+        mlp_dim:                        int,
+        activation:                     Type[nn.Module],
+        normalize_before_activation:    bool,
+        attention_downsample_rate:      int             =   2,
     ) -> None:
         """
         A transformer decoder that attends to an input image using
@@ -31,21 +31,21 @@ class TwoWayTransformer(nn.Module):
           activation (nn.Module): the activation to use in the MLP block
         """
         super().__init__()
-        self.depth = depth
-        self.embedding_dim = embedding_dim
-        self.num_heads = num_heads
-        self.mlp_dim = mlp_dim
-        self.layers = nn.ModuleList()
+        self.depth          = depth
+        self.embedding_dim  = embedding_dim
+        self.num_heads      = num_heads
+        self.mlp_dim        = mlp_dim
+        self.layers         = nn.ModuleList()
 
         for i in range(depth):
             curr_layer = TwoWayAttentionBlock(
-                embedding_dim=embedding_dim,
-                num_heads=num_heads,
-                mlp_dim=mlp_dim,
-                activation=activation,
-                normalize_before_activation=normalize_before_activation,
-                attention_downsample_rate=attention_downsample_rate,
-                skip_first_layer_pe=(i == 0),
+                embedding_dim               =   embedding_dim,
+                num_heads                   =   num_heads,
+                mlp_dim                     =   mlp_dim,
+                activation                  =   activation,
+                normalize_before_activation =   normalize_before_activation,
+                attention_downsample_rate   =   attention_downsample_rate,
+                skip_first_layer_pe         =   (i == 0),
             )
             self.layers.append(curr_layer)
 
@@ -58,9 +58,9 @@ class TwoWayTransformer(nn.Module):
 
     def forward(
         self,
-        image_embedding: Tensor,
-        image_pe: Tensor,
-        point_embedding: Tensor,
+        image_embedding:    Tensor,
+        image_pe:           Tensor,
+        point_embedding:    Tensor,
     ) -> Tuple[Tensor, Tensor]:
         """
         Args:
@@ -88,10 +88,10 @@ class TwoWayTransformer(nn.Module):
         # Apply transformer blocks and final layernorm
         for idx, layer in enumerate(self.layers):
             queries, keys = layer(
-                queries=queries,
-                keys=keys,
-                query_pe=point_embedding,
-                key_pe=image_pe,
+                queries     =   queries,
+                keys        =   keys,
+                query_pe    =   point_embedding,
+                key_pe      =   image_pe,
             )
 
         # Apply the final attention layer from the points to the image
@@ -106,13 +106,13 @@ class TwoWayTransformer(nn.Module):
 class TwoWayAttentionBlock(nn.Module):
     def __init__(
         self,
-        embedding_dim: int,
-        num_heads: int,
-        mlp_dim: int,
-        activation: Type[nn.Module],
-        normalize_before_activation: bool,
-        attention_downsample_rate: int = 2,
-        skip_first_layer_pe: bool = False,
+        embedding_dim:                  int,
+        num_heads:                      int,
+        mlp_dim:                        int,
+        activation:                     Type[nn.Module],
+        normalize_before_activation:    bool,
+        attention_downsample_rate:      int             =   2,
+        skip_first_layer_pe:            bool            =   False,
     ) -> None:
         """
         A transformer block with four layers: (1) self-attention of sparse
@@ -197,9 +197,9 @@ class AttentionForTwoWayAttentionBlock(nn.Module):
 
     def __init__(
         self,
-        embedding_dim: int,
-        num_heads: int,
-        downsample_rate: int = 1,
+        embedding_dim:      int,
+        num_heads:          int,
+        downsample_rate:    int = 1,
     ) -> None:
         super().__init__()
         self.embedding_dim = embedding_dim
