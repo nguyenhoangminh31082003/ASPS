@@ -82,11 +82,11 @@ class SamPredictor:
         ), f"set_torch_image input must be BCHW with long side {self.model.image_encoder.img_size}."
         self.reset_image()
 
-        self.original_size = original_image_size
-        self.input_size = tuple(transformed_image.shape[-2:])
-        input_image = self.model.preprocess(transformed_image)
-        self.features = self.model.image_encoder(input_image)
-        self.is_image_set = True
+        self.original_size  = original_image_size
+        self.input_size     = tuple(transformed_image.shape[-2:])
+        input_image         = self.model.preprocess(transformed_image)
+        self.features       = self.model.image_encoder(input_image)
+        self.is_image_set   = True
 
     def predict(
         self,
@@ -219,18 +219,18 @@ class SamPredictor:
 
         # Embed prompts
         sparse_embeddings, dense_embeddings = self.model.prompt_encoder(
-            points=points,
-            boxes=boxes,
-            masks=mask_input,
+            points  = points,
+            boxes   = boxes,
+            masks   = mask_input,
         )
 
         # Predict masks
         low_res_masks, iou_predictions = self.model.mask_decoder(
-            image_embeddings=self.features,
-            image_pe=self.model.prompt_encoder.get_dense_pe(),
-            sparse_prompt_embeddings=sparse_embeddings,
-            dense_prompt_embeddings=dense_embeddings,
-            multimask_output=multimask_output,
+            image_embeddings          = self.features,
+            image_pe                  = self.model.prompt_encoder.get_dense_pe(),
+            sparse_prompt_embeddings  = sparse_embeddings,
+            dense_prompt_embeddings   = dense_embeddings,
+            multimask_output          = multimask_output,
         )
 
         # Upscale the masks to the original image resolution

@@ -137,15 +137,15 @@ def mask_to_rle_pytorch(tensor: torch.Tensor) -> List[Dict[str, Any]]:
 
 def rle_to_mask(rle: Dict[str, Any]) -> np.ndarray:
     """Compute a binary mask from an uncompressed RLE."""
-    h, w = rle["size"]
-    mask = np.empty(h * w, dtype=bool)
-    idx = 0
-    parity = False
+    h, w    = rle["size"]
+    mask    = np.empty(h * w, dtype=bool)
+    idx     = 0
+    parity  = False
     for count in rle["counts"]:
         mask[idx : idx + count] = parity
         idx += count
         parity ^= True
-    mask = mask.reshape(w, h)
+    mask    = mask.reshape(w, h)
     return mask.transpose()  # Put in C order
 
 
@@ -253,7 +253,10 @@ def uncrop_points(points: torch.Tensor, crop_box: List[int]) -> torch.Tensor:
 
 
 def uncrop_masks(
-    masks: torch.Tensor, crop_box: List[int], orig_h: int, orig_w: int
+    masks:      torch.Tensor, 
+    crop_box:   List[int], 
+    orig_h:     int, 
+    orig_w:     int
 ) -> torch.Tensor:
     x0, y0, x1, y1 = crop_box
     if x0 == 0 and y0 == 0 and x1 == orig_w and y1 == orig_h:
@@ -265,7 +268,9 @@ def uncrop_masks(
 
 
 def remove_small_regions(
-    mask: np.ndarray, area_thresh: float, mode: str
+    mask:           np.ndarray, 
+    area_thresh:    float, 
+    mode:           str
 ) -> Tuple[np.ndarray, bool]:
     """
     Removes small disconnected regions and holes in a mask. Returns the
@@ -318,18 +323,18 @@ def batched_mask_to_box(masks: torch.Tensor) -> torch.Tensor:
         masks = masks.unsqueeze(0)
 
     # Get top and bottom edges
-    in_height, _ = torch.max(masks, dim=-1)
-    in_height_coords = in_height * torch.arange(h, device=in_height.device)[None, :]
-    bottom_edges, _ = torch.max(in_height_coords, dim=-1)
-    in_height_coords = in_height_coords + h * (~in_height)
-    top_edges, _ = torch.min(in_height_coords, dim=-1)
+    in_height, _        = torch.max(masks, dim=-1)
+    in_height_coords    = in_height * torch.arange(h, device=in_height.device)[None, :]
+    bottom_edges, _     = torch.max(in_height_coords, dim=-1)
+    in_height_coords    = in_height_coords + h * (~in_height)
+    top_edges, _        = torch.min(in_height_coords, dim=-1)
 
     # Get left and right edges
-    in_width, _ = torch.max(masks, dim=-2)
-    in_width_coords = in_width * torch.arange(w, device=in_width.device)[None, :]
-    right_edges, _ = torch.max(in_width_coords, dim=-1)
-    in_width_coords = in_width_coords + w * (~in_width)
-    left_edges, _ = torch.min(in_width_coords, dim=-1)
+    in_width, _         = torch.max(masks, dim=-2)
+    in_width_coords     = in_width * torch.arange(w, device=in_width.device)[None, :]
+    right_edges, _      = torch.max(in_width_coords, dim=-1)
+    in_width_coords     = in_width_coords + w * (~in_width)
+    left_edges, _       = torch.min(in_width_coords, dim=-1)
 
     # If the mask is empty the right edge will be to the left of the left edge.
     # Replace these boxes with [0, 0, 0, 0]

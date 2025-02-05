@@ -17,12 +17,12 @@ class MaskDecoder(nn.Module):
     def __init__(
         self,
         *,
-        transformer_dim: int,
-        transformer: nn.Module,
-        num_multimask_outputs: int = 3,
-        activation: Type[nn.Module] = nn.GELU,
-        iou_head_depth: int = 3,
-        iou_head_hidden_dim: int = 256,
+        transformer_dim:        int,
+        transformer:            nn.Module,
+        num_multimask_outputs:  int             = 3,
+        activation:             Type[nn.Module] = nn.GELU,
+        iou_head_depth:         int             = 3,
+        iou_head_hidden_dim:    int             = 256,
     ) -> None:
         """
         Predicts masks given an image and prompt embeddings, using a
@@ -72,11 +72,11 @@ class MaskDecoder(nn.Module):
 
     def forward(
         self,
-        image_embeddings: torch.Tensor,
-        image_pe: torch.Tensor,
-        sparse_prompt_embeddings: torch.Tensor,
-        dense_prompt_embeddings: torch.Tensor,
-        multimask_output: bool,
+        image_embeddings:           torch.Tensor,
+        image_pe:                   torch.Tensor,
+        sparse_prompt_embeddings:   torch.Tensor,
+        dense_prompt_embeddings:    torch.Tensor,
+        multimask_output:           bool,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Predict masks given image and prompt embeddings.
@@ -94,10 +94,10 @@ class MaskDecoder(nn.Module):
           torch.Tensor: batched predictions of mask quality
         """
         masks, iou_pred = self.predict_masks(
-            image_embeddings=image_embeddings,
-            image_pe=image_pe,
-            sparse_prompt_embeddings=sparse_prompt_embeddings,
-            dense_prompt_embeddings=dense_prompt_embeddings,
+            image_embeddings            =   image_embeddings,
+            image_pe                    =   image_pe,
+            sparse_prompt_embeddings    =   sparse_prompt_embeddings,
+            dense_prompt_embeddings     =   dense_prompt_embeddings,
         )
 
         # Select the correct mask or masks for output
@@ -113,10 +113,10 @@ class MaskDecoder(nn.Module):
 
     def predict_masks(
         self,
-        image_embeddings: torch.Tensor,
-        image_pe: torch.Tensor,
-        sparse_prompt_embeddings: torch.Tensor,
-        dense_prompt_embeddings: torch.Tensor,
+        image_embeddings:           torch.Tensor,
+        image_pe:                   torch.Tensor,
+        sparse_prompt_embeddings:   torch.Tensor,
+        dense_prompt_embeddings:    torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Predicts masks. See 'forward' for more details."""
         # Concatenate output tokens
@@ -156,10 +156,10 @@ class MaskDecoder(nn.Module):
 class MLP(nn.Module):
     def __init__(
         self,
-        input_dim: int,
-        hidden_dim: int,
-        output_dim: int,
-        num_layers: int,
+        input_dim:      int,
+        hidden_dim:     int,
+        output_dim:     int,
+        num_layers:     int,
         sigmoid_output: bool = False,
     ) -> None:
         super().__init__()

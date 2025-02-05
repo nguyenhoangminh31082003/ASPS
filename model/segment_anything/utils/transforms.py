@@ -61,7 +61,11 @@ class ResizeLongestSide:
         # Expects an image in BCHW format. May not exactly match apply_image.
         target_size = self.get_preprocess_shape(image.shape[2], image.shape[3], self.target_length)
         return F.interpolate(
-            image, target_size, mode="bilinear", align_corners=False, antialias=True
+            image, 
+            target_size, 
+            mode            =   "bilinear", 
+            align_corners   =   False, 
+            antialias       =   True
         )
 
     def apply_coords_torch(
@@ -95,8 +99,8 @@ class ResizeLongestSide:
         """
         Compute the output size given input size and target long side length.
         """
-        scale = long_side_length * 1.0 / max(oldh, oldw)
-        newh, neww = oldh * scale, oldw * scale
-        neww = int(neww + 0.5)
-        newh = int(newh + 0.5)
+        scale       = long_side_length * 1.0 / max(oldh, oldw)
+        newh, neww  = oldh * scale, oldw * scale
+        neww        = int(neww + 0.5)
+        newh        = int(newh + 0.5)
         return (newh, neww)

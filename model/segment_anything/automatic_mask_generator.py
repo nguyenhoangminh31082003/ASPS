@@ -182,13 +182,13 @@ class SamAutomaticMaskGenerator:
         curr_anns = []
         for idx in range(len(mask_data["segmentations"])):
             ann = {
-                "segmentation": mask_data["segmentations"][idx],
-                "area": area_from_rle(mask_data["rles"][idx]),
-                "bbox": box_xyxy_to_xywh(mask_data["boxes"][idx]).tolist(),
-                "predicted_iou": mask_data["iou_preds"][idx].item(),
-                "point_coords": [mask_data["points"][idx].tolist()],
-                "stability_score": mask_data["stability_score"][idx].item(),
-                "crop_box": box_xyxy_to_xywh(mask_data["crop_boxes"][idx]).tolist(),
+                "segmentation":     mask_data["segmentations"][idx],
+                "area":             area_from_rle(mask_data["rles"][idx]),
+                "bbox":             box_xyxy_to_xywh(mask_data["boxes"][idx]).tolist(),
+                "predicted_iou":    mask_data["iou_preds"][idx].item(),
+                "point_coords":     [mask_data["points"][idx].tolist()],
+                "stability_score":  mask_data["stability_score"][idx].item(),
+                "crop_box":         box_xyxy_to_xywh(mask_data["crop_boxes"][idx]).tolist(),
             }
             curr_anns.append(ann)
 
@@ -257,9 +257,9 @@ class SamAutomaticMaskGenerator:
         data.filter(keep_by_nms)
 
         # Return to the original image frame
-        data["boxes"] = uncrop_boxes_xyxy(data["boxes"], crop_box)
-        data["points"] = uncrop_points(data["points"], crop_box)
-        data["crop_boxes"] = torch.tensor([crop_box for _ in range(len(data["rles"]))])
+        data["boxes"]       = uncrop_boxes_xyxy(data["boxes"], crop_box)
+        data["points"]      = uncrop_points(data["points"], crop_box)
+        data["crop_boxes"]  = torch.tensor([crop_box for _ in range(len(data["rles"]))])
 
         return data
 
@@ -285,9 +285,9 @@ class SamAutomaticMaskGenerator:
 
         # Serialize predictions and store in MaskData
         data = MaskData(
-            masks=masks.flatten(0, 1),
-            iou_preds=iou_preds.flatten(0, 1),
-            points=torch.as_tensor(points.repeat(masks.shape[1], axis=0)),
+            masks       =   masks.flatten(0, 1),
+            iou_preds   =   iou_preds.flatten(0, 1),
+            points      =   torch.as_tensor(points.repeat(masks.shape[1], axis=0)),
         )
         del masks
 

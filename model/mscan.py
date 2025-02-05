@@ -12,21 +12,21 @@ from torch.nn.modules.utils import _pair as to_2tuple
 
 def build_mscan(cfg):
     if cfg.model == "tiny":
-        embed_dims = [32, 64, 160, 256]
-        depths = [3, 3, 5, 2]
-        drop_path_rate = 0.1
+        embed_dims      = [32, 64, 160, 256]
+        depths          = [3, 3, 5, 2]
+        drop_path_rate  = 0.1
     elif cfg.model == "small":
-        embed_dims = [64, 128, 320, 512]
-        depths = [2, 2, 4, 2]
-        drop_path_rate = 0.1
+        embed_dims      = [64, 128, 320, 512]
+        depths          = [2, 2, 4, 2]
+        drop_path_rate  = 0.1
     elif cfg.model == "base":
-        embed_dims = [64, 128, 320, 512]
-        depths = [3, 3, 12, 3]
-        drop_path_rate = 0.1
+        embed_dims      = [64, 128, 320, 512]
+        depths          = [3, 3, 12, 3]
+        drop_path_rate  = 0.1
     elif cfg.model == "large":
-        embed_dims = [64, 128, 320, 512]
-        depths = [3, 5, 27, 3]
-        drop_path_rate = 0.3
+        embed_dims      = [64, 128, 320, 512]
+        depths          = [3, 5, 27, 3]
+        drop_path_rate  = 0.3
     else:
         raise ValueError("Unknown MSCAN model")
 
@@ -116,16 +116,16 @@ class StemConv(BaseModule):
 class AttentionModule(BaseModule):
     def __init__(self, dim):
         super().__init__()
-        self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
-        self.conv0_1 = nn.Conv2d(dim, dim, (1, 7), padding=(0, 3), groups=dim)
-        self.conv0_2 = nn.Conv2d(dim, dim, (7, 1), padding=(3, 0), groups=dim)
+        self.conv0      = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
+        self.conv0_1    = nn.Conv2d(dim, dim, (1, 7), padding=(0, 3), groups=dim)
+        self.conv0_2    = nn.Conv2d(dim, dim, (7, 1), padding=(3, 0), groups=dim)
 
-        self.conv1_1 = nn.Conv2d(dim, dim, (1, 11), padding=(0, 5), groups=dim)
-        self.conv1_2 = nn.Conv2d(dim, dim, (11, 1), padding=(5, 0), groups=dim)
+        self.conv1_1    = nn.Conv2d(dim, dim, (1, 11), padding=(0, 5), groups=dim)
+        self.conv1_2    = nn.Conv2d(dim, dim, (11, 1), padding=(5, 0), groups=dim)
 
-        self.conv2_1 = nn.Conv2d(dim, dim, (1, 21), padding=(0, 10), groups=dim)
-        self.conv2_2 = nn.Conv2d(dim, dim, (21, 1), padding=(10, 0), groups=dim)
-        self.conv3 = nn.Conv2d(dim, dim, 1)
+        self.conv2_1    = nn.Conv2d(dim, dim, (1, 21), padding=(0, 10), groups=dim)
+        self.conv2_2    = nn.Conv2d(dim, dim, (21, 1), padding=(10, 0), groups=dim)
+        self.conv3      = nn.Conv2d(dim, dim, 1)
 
     def forward(self, x):
         u = x.clone()
@@ -288,21 +288,21 @@ class MSCAN(BaseModule):
                 patch_embed = StemConv(3, embed_dims[0], norm_cfg=norm_cfg)
             else:
                 patch_embed = OverlapPatchEmbed(
-                    patch_size=7 if i == 0 else 3,
-                    stride=4 if i == 0 else 2,
-                    in_chans=in_chans if i == 0 else embed_dims[i - 1],
-                    embed_dim=embed_dims[i],
-                    norm_cfg=norm_cfg,
+                    patch_size  =   7 if i == 0 else 3,
+                    stride      =   4 if i == 0 else 2,
+                    in_chans    =   in_chans if i == 0 else embed_dims[i - 1],
+                    embed_dim   =   embed_dims[i],
+                    norm_cfg    =   norm_cfg,
                 )
 
             block = nn.ModuleList(
                 [
                     Block(
-                        dim=embed_dims[i],
-                        mlp_ratio=mlp_ratios[i],
-                        drop=drop_rate,
-                        drop_path=dpr[cur + j],
-                        norm_cfg=norm_cfg,
+                        dim         =   embed_dims[i],
+                        mlp_ratio   =   mlp_ratios[i],
+                        drop        =   drop_rate,
+                        drop_path   =   dpr[cur + j],
+                        norm_cfg    =   norm_cfg,
                     )
                     for j in range(depths[i])
                 ]

@@ -17,22 +17,22 @@ from .common import LayerNorm2d, MLPBlock
 class ImageEncoderViT(nn.Module):
     def __init__(
         self,
-        img_size: int = 1024,
-        patch_size: int = 16,
-        in_chans: int = 3,
-        embed_dim: int = 768,
-        depth: int = 12,
-        num_heads: int = 12,
-        mlp_ratio: float = 4.0,
-        out_chans: int = 256,
-        qkv_bias: bool = True,
-        norm_layer: Type[nn.Module] = nn.LayerNorm,
-        act_layer: Type[nn.Module] = nn.GELU,
-        use_abs_pos: bool = True,
-        use_rel_pos: bool = False,
-        rel_pos_zero_init: bool = True,
-        window_size: int = 0,
-        global_attn_indexes: Tuple[int, ...] = (),
+        img_size:               int             = 1024,
+        patch_size:             int             = 16,
+        in_chans:               int             = 3,
+        embed_dim:              int             = 768,
+        depth:                  int             = 12,
+        num_heads:              int             = 12,
+        mlp_ratio:              float           = 4.0,
+        out_chans:              int             = 256,
+        qkv_bias:               bool            = True,
+        norm_layer:             Type[nn.Module] = nn.LayerNorm,
+        act_layer:              Type[nn.Module] = nn.GELU,
+        use_abs_pos:            bool            = True,
+        use_rel_pos:            bool            = False,
+        rel_pos_zero_init:      bool            = True,
+        window_size:            int             = 0,
+        global_attn_indexes:    Tuple[int, ...] = (),
     ) -> None:
         """
         Args:
@@ -56,10 +56,10 @@ class ImageEncoderViT(nn.Module):
         self.img_size = img_size
 
         self.patch_embed = PatchEmbed(
-            kernel_size=(patch_size, patch_size),
-            stride=(patch_size, patch_size),
-            in_chans=in_chans,
-            embed_dim=embed_dim,
+            kernel_size =   (patch_size, patch_size),
+            stride      =   (patch_size, patch_size),
+            in_chans    =   in_chans,
+            embed_dim   =   embed_dim,
         )
 
         self.pos_embed: Optional[nn.Parameter] = None
@@ -72,16 +72,16 @@ class ImageEncoderViT(nn.Module):
         self.blocks = nn.ModuleList()
         for i in range(depth):
             block = Block(
-                dim=embed_dim,
-                num_heads=num_heads,
-                mlp_ratio=mlp_ratio,
-                qkv_bias=qkv_bias,
-                norm_layer=norm_layer,
-                act_layer=act_layer,
-                use_rel_pos=use_rel_pos,
-                rel_pos_zero_init=rel_pos_zero_init,
-                window_size=window_size if i not in global_attn_indexes else 0,
-                input_size=(img_size // patch_size, img_size // patch_size),
+                dim                 =   embed_dim,
+                num_heads           =   num_heads,
+                mlp_ratio           =   mlp_ratio,
+                qkv_bias            =   qkv_bias,
+                norm_layer          =   norm_layer,
+                act_layer           =   act_layer,
+                use_rel_pos         =   use_rel_pos,
+                rel_pos_zero_init   =   rel_pos_zero_init,
+                window_size         =   window_size if i not in global_attn_indexes else 0,
+                input_size          =   (img_size // patch_size, img_size // patch_size),
             )
             self.blocks.append(block)
 
@@ -89,16 +89,16 @@ class ImageEncoderViT(nn.Module):
             nn.Conv2d(
                 embed_dim,
                 out_chans,
-                kernel_size=1,
-                bias=False,
+                kernel_size =   1,
+                bias        =   False,
             ),
             LayerNorm2d(out_chans),
             nn.Conv2d(
                 out_chans,
                 out_chans,
-                kernel_size=3,
-                padding=1,
-                bias=False,
+                kernel_size =   3,
+                padding     =   1,
+                bias        =   False,
             ),
             LayerNorm2d(out_chans),
         )
@@ -123,16 +123,16 @@ class Block(nn.Module):
 
     def __init__(
         self,
-        dim: int,
-        num_heads: int,
-        mlp_ratio: float = 4.0,
-        qkv_bias: bool = True,
-        norm_layer: Type[nn.Module] = nn.LayerNorm,
-        act_layer: Type[nn.Module] = nn.GELU,
-        use_rel_pos: bool = False,
-        rel_pos_zero_init: bool = True,
-        window_size: int = 0,
-        input_size: Optional[Tuple[int, int]] = None,
+        dim:                int,
+        num_heads:          int,
+        mlp_ratio:          float                       = 4.0,
+        qkv_bias:           bool                        = True,
+        norm_layer:         Type[nn.Module]             = nn.LayerNorm,
+        act_layer:          Type[nn.Module]             = nn.GELU,
+        use_rel_pos:        bool                        = False,
+        rel_pos_zero_init:  bool                        = True,
+        window_size:        int                         = 0,
+        input_size:         Optional[Tuple[int, int]]   = None,
     ) -> None:
         """
         Args:
@@ -153,11 +153,11 @@ class Block(nn.Module):
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
             dim,
-            num_heads=num_heads,
-            qkv_bias=qkv_bias,
-            use_rel_pos=use_rel_pos,
-            rel_pos_zero_init=rel_pos_zero_init,
-            input_size=input_size if window_size == 0 else (window_size, window_size),
+            num_heads           =   num_heads,
+            qkv_bias            =   qkv_bias,
+            use_rel_pos         =   use_rel_pos,
+            rel_pos_zero_init   =   rel_pos_zero_init,
+            input_size          =   input_size if window_size == 0 else (window_size, window_size),
         )
 
         self.norm2 = norm_layer(dim)
@@ -189,12 +189,12 @@ class Attention(nn.Module):
 
     def __init__(
         self,
-        dim: int,
-        num_heads: int = 8,
-        qkv_bias: bool = True,
-        use_rel_pos: bool = False,
-        rel_pos_zero_init: bool = True,
-        input_size: Optional[Tuple[int, int]] = None,
+        dim:                int,
+        num_heads:          int                         = 8,
+        qkv_bias:           bool                        = True,
+        use_rel_pos:        bool                        = False,
+        rel_pos_zero_init:  bool                        = True,
+        input_size:         Optional[Tuple[int, int]]   = None,
     ) -> None:
         """
         Args:
@@ -330,12 +330,12 @@ def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor
 
 
 def add_decomposed_rel_pos(
-    attn: torch.Tensor,
-    q: torch.Tensor,
-    rel_pos_h: torch.Tensor,
-    rel_pos_w: torch.Tensor,
-    q_size: Tuple[int, int],
-    k_size: Tuple[int, int],
+    attn:       torch.Tensor,
+    q:          torch.Tensor,
+    rel_pos_h:  torch.Tensor,
+    rel_pos_w:  torch.Tensor,
+    q_size:     Tuple[int, int],
+    k_size:     Tuple[int, int],
 ) -> torch.Tensor:
     """
     Calculate decomposed Relative Positional Embeddings from :paper:`mvitv2`.
@@ -375,11 +375,11 @@ class PatchEmbed(nn.Module):
 
     def __init__(
         self,
-        kernel_size: Tuple[int, int] = (16, 16),
-        stride: Tuple[int, int] = (16, 16),
-        padding: Tuple[int, int] = (0, 0),
-        in_chans: int = 3,
-        embed_dim: int = 768,
+        kernel_size:    Tuple[int, int] = (16, 16),
+        stride:         Tuple[int, int] = (16, 16),
+        padding:        Tuple[int, int] = (0, 0),
+        in_chans:       int             = 3,
+        embed_dim:      int             = 768,
     ) -> None:
         """
         Args:

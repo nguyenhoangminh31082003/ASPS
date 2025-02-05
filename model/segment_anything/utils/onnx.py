@@ -81,9 +81,9 @@ class SamOnnxModel(nn.Module):
     def mask_postprocessing(self, masks: torch.Tensor, orig_im_size: torch.Tensor) -> torch.Tensor:
         masks = F.interpolate(
             masks,
-            size=(self.img_size, self.img_size),
-            mode="bilinear",
-            align_corners=False,
+            size            =   (self.img_size, self.img_size),
+            mode            =   "bilinear",
+            align_corners   =   False,
         )
 
         prepadded_size = self.resize_longest_image_size(orig_im_size, self.img_size).to(

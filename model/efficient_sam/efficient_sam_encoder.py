@@ -41,9 +41,9 @@ class PatchEmbed(nn.Module):
         self.proj = nn.Conv2d(
             in_chans,
             embed_dim,
-            kernel_size=(patch_size, patch_size),
-            stride=(patch_size, patch_size),
-            bias=True,
+            kernel_size =   (patch_size, patch_size),
+            stride      =   (patch_size, patch_size),
+            bias        =   True,
         )
 
     def forward(self, x):
@@ -61,11 +61,11 @@ class Attention(nn.Module):
         qk_scale=None,
     ):
         super().__init__()
-        self.num_heads = num_heads
-        head_dim = dim // num_heads
-        self.scale = qk_scale or head_dim**-0.5
-        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        self.proj = nn.Linear(dim, dim)
+        self.num_heads  = num_heads
+        head_dim        = dim // num_heads
+        self.scale      = qk_scale or head_dim**-0.5
+        self.qkv        = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.proj       = nn.Linear(dim, dim)
 
     def forward(self, x):
         B, N, C = x.shape
@@ -122,9 +122,9 @@ class Block(nn.Module):
         self.norm1 = nn.LayerNorm(dim, eps=1e-6)
         self.attn = Attention(
             dim,
-            num_heads=num_heads,
-            qkv_bias=qkv_bias,
-            qk_scale=qk_scale,
+            num_heads   =   num_heads,
+            qkv_bias    =   qkv_bias,
+            qk_scale    =   qk_scale,
         )
         self.norm2 = nn.LayerNorm(dim, eps=1e-6)
         mlp_hidden_dim = int(dim * mlp_ratio)
@@ -219,16 +219,16 @@ class ImageEncoderViT(nn.Module):
             nn.Conv2d(
                 patch_embed_dim,
                 neck_dims[0],
-                kernel_size=1,
-                bias=False,
+                kernel_size =   1,
+                bias        =   False,
             ),
             LayerNorm2d(neck_dims[0]),
             nn.Conv2d(
                 neck_dims[0],
                 neck_dims[0],
-                kernel_size=3,
-                padding=1,
-                bias=False,
+                kernel_size =   3,
+                padding     =   1,
+                bias        =   False,
             ),
             LayerNorm2d(neck_dims[0]),
         )

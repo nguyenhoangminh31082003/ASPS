@@ -13,9 +13,9 @@ import torch.nn as nn
 class MLPBlock(nn.Module):
     def __init__(
         self,
-        embedding_dim: int,
-        mlp_dim: int,
-        act: Type[nn.Module] = nn.GELU,
+        embedding_dim:  int,
+        mlp_dim:        int,
+        act:            Type[nn.Module] = nn.GELU,
     ) -> None:
         super().__init__()
         self.lin1 = nn.Linear(embedding_dim, mlp_dim)
@@ -32,8 +32,8 @@ class LayerNorm2d(nn.Module):
     def __init__(self, num_channels: int, eps: float = 1e-6) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones(num_channels))
-        self.bias = nn.Parameter(torch.zeros(num_channels))
-        self.eps = eps
+        self.bias   = nn.Parameter(torch.zeros(num_channels))
+        self.eps    = eps
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         u = x.mean(1, keepdim=True)  # torch.Size([4, 1, 64, 64])

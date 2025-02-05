@@ -65,13 +65,13 @@ class PositionEmbeddingRandom(nn.Module):
 
     def forward(self, size: Tuple[int, int]) -> torch.Tensor:
         """Generate positional encoding for a grid of the specified size."""
-        h, w = size
+        h, w        = size
         device: Any = self.positional_encoding_gaussian_matrix.device
-        grid = torch.ones((h, w), device=device, dtype=torch.float32)
-        y_embed = grid.cumsum(dim=0) - 0.5
-        x_embed = grid.cumsum(dim=1) - 0.5
-        y_embed = y_embed / h
-        x_embed = x_embed / w
+        grid        = torch.ones((h, w), device=device, dtype=torch.float32)
+        y_embed     = grid.cumsum(dim=0) - 0.5
+        x_embed     = grid.cumsum(dim=1) - 0.5
+        y_embed     = y_embed / h
+        x_embed     = x_embed / w
 
         pe = self._pe_encoding(torch.stack([x_embed, y_embed], dim=-1))
         return pe.permute(2, 0, 1)  # C x H x W
@@ -80,7 +80,7 @@ class PositionEmbeddingRandom(nn.Module):
         self, coords_input: torch.Tensor, image_size: Tuple[int, int]
     ) -> torch.Tensor:
         """Positionally encode points that are not normalized to [0,1]."""
-        coords = coords_input.clone()
+        coords          = coords_input.clone()
         coords[:, :, 0] = coords[:, :, 0] / image_size[1]
         coords[:, :, 1] = coords[:, :, 1] / image_size[0]
         return self._pe_encoding(coords.to(torch.float))  # B x N x C
@@ -252,7 +252,9 @@ class MaskDecoder(nn.Module):
         src = src + self.dense_prompt_tokens
         # image_pe = self.pe_layer(self.image_embedding_size).unsqueeze(0)        # torch.Size([1, 256, 64, 64])
         image_pe = F.interpolate(
-            cnn_feature, size=src.shape[2:], mode="bilinear"
+            cnn_feature, 
+            size        =   src.shape[2:], 
+            mode        =   "bilinear"
         )  # torch.Size([1, 256, 64, 64])
         pos_src = torch.repeat_interleave(
             image_pe, tokens.shape[0], dim=0

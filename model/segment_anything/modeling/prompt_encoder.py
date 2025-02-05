@@ -16,11 +16,11 @@ from .common import LayerNorm2d
 class PromptEncoder(nn.Module):
     def __init__(
         self,
-        embed_dim: int,
-        image_embedding_size: Tuple[int, int],
-        input_image_size: Tuple[int, int],
-        mask_in_chans: int,
-        activation: Type[nn.Module] = nn.GELU,
+        embed_dim:              int,
+        image_embedding_size:   Tuple[int, int],
+        input_image_size:       Tuple[int, int],
+        mask_in_chans:          int,
+        activation:             Type[nn.Module] = nn.GELU,
     ) -> None:
         """
         Encodes prompts for input to SAM's mask decoder.
@@ -74,7 +74,7 @@ class PromptEncoder(nn.Module):
         self,
         points: torch.Tensor,
         labels: torch.Tensor,
-        pad: bool,
+        pad:    bool,
     ) -> torch.Tensor:
         """Embeds point prompts."""
         points = points + 0.5  # Shift to center of pixel
@@ -107,8 +107,8 @@ class PromptEncoder(nn.Module):
     def _get_batch_size(
         self,
         points: Optional[Tuple[torch.Tensor, torch.Tensor]],
-        boxes: Optional[torch.Tensor],
-        masks: Optional[torch.Tensor],
+        boxes:  Optional[torch.Tensor],
+        masks:  Optional[torch.Tensor],
     ) -> int:
         """
         Gets the batch size of the output given the batch size of the input prompts.
@@ -128,8 +128,8 @@ class PromptEncoder(nn.Module):
     def forward(
         self,
         points: Optional[Tuple[torch.Tensor, torch.Tensor]],
-        boxes: Optional[torch.Tensor],
-        masks: Optional[torch.Tensor],
+        boxes:  Optional[torch.Tensor],
+        masks:  Optional[torch.Tensor],
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Embeds different types of prompts, returning both sparse and dense
@@ -193,13 +193,13 @@ class PositionEmbeddingRandom(nn.Module):
 
     def forward(self, size: Tuple[int, int]) -> torch.Tensor:
         """Generate positional encoding for a grid of the specified size."""
-        h, w = size
+        h, w        = size
         device: Any = self.positional_encoding_gaussian_matrix.device
-        grid = torch.ones((h, w), device=device, dtype=torch.float32)
-        y_embed = grid.cumsum(dim=0) - 0.5
-        x_embed = grid.cumsum(dim=1) - 0.5
-        y_embed = y_embed / h
-        x_embed = x_embed / w
+        grid        = torch.ones((h, w), device=device, dtype=torch.float32)
+        y_embed     = grid.cumsum(dim=0) - 0.5
+        x_embed     = grid.cumsum(dim=1) - 0.5
+        y_embed     = y_embed / h
+        x_embed     = x_embed / w
 
         pe = self._pe_encoding(torch.stack([x_embed, y_embed], dim=-1))
         return pe.permute(2, 0, 1)  # C x H x W

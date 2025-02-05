@@ -202,11 +202,11 @@ class AttentionForTwoWayAttentionBlock(nn.Module):
         downsample_rate:    int = 1,
     ) -> None:
         super().__init__()
-        self.embedding_dim = embedding_dim
-        self.internal_dim = embedding_dim // downsample_rate
-        self.num_heads = num_heads
+        self.embedding_dim  = embedding_dim
+        self.internal_dim   = embedding_dim // downsample_rate
+        self.num_heads      = num_heads
         assert self.internal_dim % num_heads == 0, "num_heads must divide embedding_dim."
-        self.c_per_head = self.internal_dim / num_heads
+        self.c_per_head     = self.internal_dim / num_heads
         self.inv_sqrt_c_per_head = 1.0 / math.sqrt(self.c_per_head)
 
         self.q_proj = nn.Linear(embedding_dim, self.internal_dim)

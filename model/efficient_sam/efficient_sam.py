@@ -112,8 +112,8 @@ class EfficientSam(nn.Module):
         low_res_masks, iou_predictions = self.mask_decoder(
             image_embeddings,
             self.prompt_encoder.get_dense_pe(),
-            sparse_prompt_embeddings=sparse_embeddings,
-            multimask_output=multimask_output,
+            sparse_prompt_embeddings            =   sparse_embeddings,
+            multimask_output                    =   multimask_output,
         )
         _, num_predictions, low_res_size, _ = low_res_masks.shape
 
