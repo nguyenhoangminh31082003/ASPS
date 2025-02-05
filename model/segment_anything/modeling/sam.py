@@ -104,9 +104,9 @@ class Sam(nn.Module):
             else:
                 points = None
             sparse_embeddings, dense_embeddings = self.prompt_encoder(
-                points=points,
-                boxes=image_record.get("boxes", None),
-                masks=image_record.get("mask_inputs", None),
+                points  = points,
+                boxes   = image_record.get("boxes", None),
+                masks   = image_record.get("mask_inputs", None),
             )
             low_res_masks, iou_predictions = self.mask_decoder(
                 image_embeddings          = curr_embedding.unsqueeze(0),
@@ -169,7 +169,7 @@ class Sam(nn.Module):
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
         """Normalize pixel values and pad to a square input."""
         # Normalize colors
-        x = (x - self.pixel_mean) / self.pixel_std
+        x   = (x - self.pixel_mean) / self.pixel_std
 
         # Pad
         h, w = x.shape[-2:]
