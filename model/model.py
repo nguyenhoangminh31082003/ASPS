@@ -11,6 +11,7 @@ from segment_anything.modeling.mask_decoder import MaskDecoder
 from segment_anything.modeling.transformer import TwoWayTransformer
 
 class ViTSettings:
+    model_type:                         str
     encoder_embedding_dimension:        int
     encoder_depth:                      int
     encoder_number_of_attention_heads:  int
@@ -19,24 +20,38 @@ class ViTSettings:
 
     def __init__(
         self,
+        model_type:                         str,
         encoder_embedding_dimension:        int,
         encoder_depth:                      int,
         encoder_number_of_attention_heads:  int,
         encoder_global_attention_indexes:   List[int],
         checkpoint:                         Optional[str]
     ) -> None:
+        self.model_type                         = model_type
         self.encoder_embedding_dimension        = encoder_embedding_dimension
         self.encoder_depth                      = encoder_depth
         self.encoder_number_of_attention_heads  = encoder_number_of_attention_heads
         self.encoder_global_attention_indexes   = encoder_global_attention_indexes
         self.checkpoint                         = checkpoint
 
+class CNNSettings:
+    mscan_dimension:    int 
+    image_size:         int
+
+    def __init__(
+        self,
+        mscan_dimension:    int,
+        image_size:         int
+    ) -> None:
+        self.mscan_dimension    =   mscan_dimension
+        self.image_size         =   image_size
+
 class ASPS(nn.Module):
 
     def __init__(
         self, 
         vit_settings: ViTSettings,
-        cnn_settings
+        cnn_settings: CNNSettings
     ) -> None:
         super().__init__()
 
@@ -95,7 +110,15 @@ class ASPS(nn.Module):
 
             self.image_encoder = sam.image_encoder
 
-    
+        if cnn_settings is not None:
+            self.cnn_image_size = cnn_settings.image_size
+
+        self.mask_decoder = MaskDecoder(
+            model_type          =   vit_settings.model_type,
+            transformer_dim     =   256,
+            cnn_dim             =   cnn_settings.mscan_dimension,
+        )
+
     def forward(
         self,
         batched_input,
