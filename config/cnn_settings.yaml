@@ -1,0 +1,30 @@
+cnn_settings:
+  selected: "large"
+  tiny:
+    mscan_dimension: 256
+    image_size: 320
+    embedding_dimensions: [32, 64, 160, 256]
+    depths: [3, 3, 5, 2]
+    drop_path_rate: 0.1
+    checkpoint: "pretrained/mscan_l.pth"
+  small:
+    mscan_dimension: 512
+    image_size: 320
+    embedding_dimensions: [64, 128, 320, 512]
+    depths: [2, 2, 4, 2]
+    drop_path_rate: 0.1
+    checkpoint: ""
+  base:
+    mscan_dimension: 512
+    image_size: 320
+    embedding_dimensions: [64, 128, 320, 512]
+    depths: [3, 3, 12, 3]
+    drop_path_rate: 0.1
+    checkpoint: "pretrained/mscan_l.pth"
+  large:
+    mscan_dimension: 512
+    image_size: 320
+    embedding_dimensions: [64, 128, 320, 512]
+    depths: [3, 5, 27, 3]
+    drop_path_rate: 0.3
+    checkpoint: "pretrained/mscan_l.pth"

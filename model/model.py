@@ -35,16 +35,28 @@ class ViTSettings:
         self.checkpoint                         = checkpoint
 
 class CNNSettings:
-    mscan_dimension:    int 
-    image_size:         int
+    mscan_dimension:        int 
+    image_size:             int
+    embedding_dimensions:   List[int]
+    depths:                 List[int]
+    drop_path_rate:         float
+    checkpoint:             str
 
     def __init__(
         self,
-        mscan_dimension:    int,
-        image_size:         int
+        mscan_dimension:        int,
+        image_size:             int,
+        embedding_dimensions:   List[int],
+        depths:                 List[int],
+        drop_path_rate:         float,
+        checkpoint:             str
     ) -> None:
-        self.mscan_dimension    =   mscan_dimension
-        self.image_size         =   image_size
+        self.mscan_dimension        =   mscan_dimension
+        self.image_size             =   image_size
+        self.embedding_dimensions   =   embedding_dimensions
+        self.depths                 =   depths
+        self.drop_path_rate         =   drop_path_rate
+        self.checkpoint             =   checkpoint
 
 class ASPS(nn.Module):
 
