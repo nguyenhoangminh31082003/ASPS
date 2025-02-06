@@ -81,13 +81,13 @@ class TwoWayTransformer(nn.Module):
           torch.Tensor: the processed image_embedding
         """
         # BxCxHxW -> BxHWxC == B x N_image_tokens x C
-        bs, c, h, w = image_embedding.shape
+        bs, c, h, w     = image_embedding.shape
         image_embedding = image_embedding.flatten(2).permute(0, 2, 1)
-        image_pe = image_pe.flatten(2).permute(0, 2, 1)
+        image_pe        = image_pe.flatten(2).permute(0, 2, 1)
 
         # Prepare queries
         queries = point_embedding
-        keys = image_embedding
+        keys    = image_embedding
 
         # Apply transformer blocks and final layernorm
         for layer in self.layers:
@@ -132,11 +132,13 @@ class TwoWayAttentionBlock(nn.Module):
           skip_first_layer_pe (bool): skip the PE on the first layer
         """
         super().__init__()
-        self.self_attn = Attention(embedding_dim, num_heads)
-        self.norm1  = nn.LayerNorm(embedding_dim)
+        self.self_attn  = Attention(embedding_dim, num_heads)
+        self.norm1      = nn.LayerNorm(embedding_dim)
 
         self.cross_attn_token_to_image = Attention(
-            embedding_dim, num_heads, downsample_rate=attention_downsample_rate
+            embedding_dim, 
+            num_heads, 
+            downsample_rate=attention_downsample_rate
         )
         self.norm2  = nn.LayerNorm(embedding_dim)
 
@@ -145,7 +147,9 @@ class TwoWayAttentionBlock(nn.Module):
 
         self.norm4  = nn.LayerNorm(embedding_dim)
         self.cross_attn_image_to_token = Attention(
-            embedding_dim, num_heads, downsample_rate=attention_downsample_rate
+            embedding_dim, 
+            num_heads, 
+            downsample_rate=attention_downsample_rate
         )
 
         self.skip_first_layer_pe = skip_first_layer_pe
@@ -202,14 +206,14 @@ class Attention(nn.Module):
         self.num_heads      = num_heads
         assert self.internal_dim % num_heads == 0, "num_heads must divide embedding_dim."
 
-        self.q_proj = nn.Linear(embedding_dim, self.internal_dim)
-        self.k_proj = nn.Linear(embedding_dim, self.internal_dim)
-        self.v_proj = nn.Linear(embedding_dim, self.internal_dim)
-        self.out_proj = nn.Linear(self.internal_dim, embedding_dim)
+        self.q_proj     = nn.Linear(embedding_dim, self.internal_dim)
+        self.k_proj     = nn.Linear(embedding_dim, self.internal_dim)
+        self.v_proj     = nn.Linear(embedding_dim, self.internal_dim)
+        self.out_proj   = nn.Linear(self.internal_dim, embedding_dim)
 
     def _separate_heads(self, x: Tensor, num_heads: int) -> Tensor:
         b, n, c = x.shape
-        x = x.reshape(b, n, num_heads, c // num_heads)
+        x       = x.reshape(b, n, num_heads, c // num_heads)
         return x.transpose(1, 2)  # B x N_heads x N_tokens x C_per_head
 
     def _recombine_heads(self, x: Tensor) -> Tensor:
