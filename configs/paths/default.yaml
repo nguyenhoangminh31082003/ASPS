@@ -1,0 +1,6 @@
+root_dir: ${oc.env:PROJECT_ROOT}
+
+log_dir: ${paths.root_dir}/logs
+data_dir: ${paths.root_dir}/data
+
+pretrained_dir: ${paths.data_dir}/pretrained
