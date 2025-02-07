@@ -335,8 +335,8 @@ class MSCAN(BaseModule):
         outs = []
         for i in range(self.num_stages):
             patch_embed = getattr(self, f"patch_embed{i + 1}")
-            block = getattr(self, f"block{i + 1}")
-            norm = getattr(self, f"norm{i + 1}")
+            block       = getattr(self, f"block{i + 1}")
+            norm        = getattr(self, f"norm{i + 1}")
             if i == 0:
                 GELU_out, x, H, W = patch_embed(x)
                 outs.append(GELU_out)

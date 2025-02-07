@@ -52,7 +52,7 @@ class SamPredictor:
             image = image[..., ::-1]
 
         # Transform the image to the form expected by the model
-        input_image = self.transform.apply_image(image)
+        input_image       = self.transform.apply_image(image)
         input_image_torch = torch.as_tensor(input_image, device=self.device)
         input_image_torch = input_image_torch.permute(2, 0, 1).contiguous()[None, :, :, :]
 
@@ -159,9 +159,9 @@ class SamPredictor:
             return_logits=return_logits,
         )
 
-        masks_np = masks[0].detach().cpu().numpy()
-        iou_predictions_np = iou_predictions[0].detach().cpu().numpy()
-        low_res_masks_np = low_res_masks[0].detach().cpu().numpy()
+        masks_np            = masks[0].detach().cpu().numpy()
+        iou_predictions_np  = iou_predictions[0].detach().cpu().numpy()
+        low_res_masks_np    = low_res_masks[0].detach().cpu().numpy()
         return masks_np, iou_predictions_np, low_res_masks_np
 
     @torch.no_grad()

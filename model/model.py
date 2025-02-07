@@ -4,11 +4,11 @@ from torch import Tensor
 from functools import partial
 import torchvision.transforms as transforms
 from typing import Optional, List, Dict, Any
-from segment_anything.modeling.sam import Sam
-from segment_anything.modeling.image_encoder import ImageEncoderViT
-from segment_anything.modeling.prompt_encoder import PromptEncoder
-from segment_anything.modeling.mask_decoder import MaskDecoder
-from segment_anything.modeling.transformer import TwoWayTransformer
+from .segment_anything.modeling.sam import Sam
+from .segment_anything.modeling.image_encoder import ImageEncoderViT
+from .segment_anything.modeling.prompt_encoder import PromptEncoder
+from .segment_anything.modeling.mask_decoder import MaskDecoder
+from .segment_anything.modeling.transformer import TwoWayTransformer
 
 class ViTSettings:
     model_type:                         str

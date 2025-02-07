@@ -87,12 +87,12 @@ class EfficientSam(nn.Module):
             rescaled_batched_points = F.pad(
                 rescaled_batched_points,
                 (0, 0, 0, self.decoder_max_num_input_points - num_pts),
-                value=-1.0,
+                value   =   -1.0,
             )
             batched_point_labels = F.pad(
                 batched_point_labels,
                 (0, self.decoder_max_num_input_points - num_pts),
-                value=-1.0,
+                value   =   -1.0,
             )
 
         sparse_embeddings = self.prompt_encoder(
@@ -118,7 +118,11 @@ class EfficientSam(nn.Module):
         _, num_predictions, low_res_size, _ = low_res_masks.shape
 
         if output_w > 0 and output_h > 0:
-            output_masks = F.interpolate(low_res_masks, (output_h, output_w), mode="bicubic")
+            output_masks = F.interpolate(
+                low_res_masks, 
+                (output_h, output_w), 
+                mode                    =   "bicubic"
+            )
             output_masks = torch.reshape(
                 output_masks,
                 (batch_size, max_num_queries, num_predictions, output_h, output_w),
