@@ -10,11 +10,11 @@ def build_vit_encoder(vit_name, checkpoint):
     ], f"Unknown vit model {vit_name}"
 
     if vit_name == "vit_b":
-        model = sam_model_registry["vit_b"](checkpoint)
+        model = sam_model_registry["vit_b"](checkpoint=checkpoint)
     elif vit_name == "vit_h":
-        model = sam_model_registry["vit_h"](checkpoint)
+        model = sam_model_registry["vit_h"](checkpoint=checkpoint)
     elif vit_name == "efficient_sam_vitt":
-        model = build_efficient_sam_vitt(checkpoint)
+        model = build_efficient_sam_vitt(checkpoint=checkpoint)
     model.eval()
 
     # Freeze the model

@@ -2,6 +2,10 @@ import rootutils
 
 rootutils.setup_root(__file__, ".project-root", pythonpath=True)
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 import logging
 
 import hydra

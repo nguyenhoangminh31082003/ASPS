@@ -59,7 +59,7 @@ class ASPSTrainer:
         pbar = tqdm(range(1, iters + 1))
 
         for itr in pbar:
-            self.model.train()
+            self.model.network.train()
 
             img, gt, _ = next(dataloader)
             img, gt = img.to(self.device), gt.to(self.device)
@@ -73,30 +73,32 @@ class ASPSTrainer:
             ones = torch.ones_like(iou_pred)
             confidence = (iou_pred + (ones - uncertainty_p.mean(dim=(2, 3)))) / 2
 
-            eps = 1e-23
-            pred = torch.clamp(pred, eps, 1 - eps)
-            confidence = torch.clamp(confidence, eps, 1 - eps)
+            eps = 1e-12
+            pred = torch.clamp(pred, 0.0 + eps, 1 - eps)
+            confidence = torch.clamp(confidence, 0.0 + eps, 1 - eps)
 
             # Hint module
             b = torch.bernoulli(torch.Tensor(confidence.size()).uniform_(0, 1))
             b = b.to(self.device)
 
-            pred_new = (1 - b[:, :, None, None]) * pred + b[:, :, None, None] * (
-                confidence[:, :, None, None] * pred + (1 - confidence[:, :, None, None]) * gt
+            pred_new = (
+                b[:, :, None, None]
+                * (confidence[:, :, None, None] * pred + (1 - confidence[:, :, None, None]) * gt)
+                + (1 - b[:, :, None, None]) * pred
             )
 
             self.optimizer.zero_grad()
             confidence_loss = torch.mean(-torch.log(confidence))
             loss = self.seg_loss(pred_new, gt) + lmbda * confidence_loss
 
-            if budget > confidence_loss.mean():
-                lmbda /= 0.1
-            else:
+            if budget > confidence_loss.item():
+                lmbda /= 1.01
+            elif budget < confidence_loss.item():
                 lmbda /= 0.99
 
             loss.backward()
 
-            nn.utils.clip_grad_norm_(self.model.parameters(), clipping)
+            nn.utils.clip_grad_norm_(self.model.network.parameters(), clipping)
             self.optimizer.step()
             pbar.set_postfix(loss=loss.item())
             pbar.update(1)
