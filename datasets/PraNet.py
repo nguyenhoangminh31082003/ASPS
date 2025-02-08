@@ -71,7 +71,7 @@ class PraNetDataset(Dataset):
             self.transforms = get_test_augmentation(image_size)
 
     def load_dataset(self, root_dir, train):
-        img_path = os.path.join(root_dir, "image")
+        img_path = os.path.join(root_dir, "image" if train else "images")
         mask_path = os.path.join(root_dir, "masks")
 
         img_list, mask_list = [], []

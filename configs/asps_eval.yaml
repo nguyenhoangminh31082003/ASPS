@@ -1,0 +1,57 @@
+defaults:
+  - _self_
+  - paths: default
+  - hydra: default
+
+experiment: "0308_E_L"
+task_name: "eval"
+
+result_file: ${paths.output_dir}/result.csv
+
+experiment_dir: ??? # Must be inputted by the user
+
+trainer:
+  _target_: trainers.asps.ASPSTrainer
+  device: cuda:0
+  iters: null
+  checkpoint_dir: ${experiment_dir}/checkpoints
+  save_iter: null
+  budget: null
+  clipping: null
+  tensorboard_path: ${experiment_dir}/tensorboard
+  optimizer: null
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  _partial_: true
+  batch_size: 4
+  shuffle: true
+  num_workers: 4
+  pin_memory: true
+
+datasets:
+  - _target_: datasets.PraNet.PraNetDataset
+    root_dir: ${paths.data_dir}/PraNet/TestDataset/CVC-300
+    image_size: 1024
+    train: false
+    train_aug_ver: null
+  - _target_: datasets.PraNet.PraNetDataset
+    root_dir: ${paths.data_dir}/PraNet/TestDataset/CVC-ClinicDB
+    image_size: 1024
+    train: false
+    train_aug_ver: null
+  - _target_: datasets.PraNet.PraNetDataset
+    root_dir: ${paths.data_dir}/PraNet/TestDataset/CVC-ColonDB
+    image_size: 1024
+    train: false
+    train_aug_ver: null
+  - _target_: datasets.PraNet.PraNetDataset
+    root_dir: ${paths.data_dir}/PraNet/TestDataset/ETIS-LaribPolypDB
+    image_size: 1024
+    train: false
+    train_aug_ver: null
+  - _target_: datasets.PraNet.PraNetDataset
+    root_dir: ${paths.data_dir}/PraNet/TestDataset/Kvasir
+    image_size: 1024
+    train: false
+    train_aug_ver: null

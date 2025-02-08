@@ -1,8 +1,0 @@
-_target_: models.asps.ASPS
-
-vit_model: "vit_b"
-vit_pretrained: null
-
-cnn_model: "tiny"
-cnn_pretrained: null
-cnn_image_size: 320

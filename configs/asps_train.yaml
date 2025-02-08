@@ -1,0 +1,47 @@
+defaults:
+  - _self_
+  - paths: default
+  - hydra: default
+
+experiment: "0308_E_L"
+task_name: "train"
+
+model:
+  _target_: models.asps.ASPS
+  vit_model: "vit_b"
+  vit_pretrained: ${paths.pretrained_dir}/sam_vit_b_01ec64.pth
+  cnn_model: "tiny"
+  cnn_pretrained: ${paths.pretrained_dir}/mscan_t.pth
+  cnn_image_size: 320
+
+dataset:
+  _target_: datasets.PraNet.PraNetDataset
+  root_dir: ${paths.data_dir}/PraNet/TrainDataset
+  image_size: 1024
+  train: true
+  train_aug_ver: 2
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  dataset: ${dataset}
+  batch_size: 4
+  shuffle: true
+  num_workers: 4
+  pin_memory: true
+
+trainer:
+  _target_: trainers.asps.ASPSTrainer
+  device: cuda:0
+  iters: 16000 # 400*40
+  checkpoint_dir: ${paths.output_dir}/checkpoints
+  save_iter: 400
+  budget: 0.3
+  clipping: 2
+
+  tensorboard_path: ${paths.output_dir}/tensorboard
+
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.00001
+    weight_decay: 0.0001

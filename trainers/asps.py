@@ -18,13 +18,23 @@ from .utils import compute_dice, compute_iou
 class ASPSTrainer:
     def __init__(
         self,
-        model: ASPS,
-        optimizer: torch.optim.Optimizer,
-        device: torch.device,
+        device,
+        iters,
+        checkpoint_dir,
+        save_iter,
+        budget,
+        clipping,
+        tensorboard_path,
+        optimizer,
     ):
-        self.model = model
-        self.optimizer = optimizer
         self.device = device
+        self.iters = iters
+        self.checkpoint_dir = checkpoint_dir
+        self.save_iter = save_iter
+        self.budget = budget
+        self.clipping = clipping
+        self.tensorboard_path = tensorboard_path
+        self.optimizer = optimizer
 
         self.mse_loss = nn.MSELoss()
         self.ce_loss = nn.CrossEntropyLoss()
@@ -36,30 +46,32 @@ class ASPSTrainer:
 
     def train(
         self,
-        dataloader,
-        iters,
-        checkpoint_dir,
-        save_iter,
-        budget=0.3,
-        clipping=2,
+        model: ASPS,
+        dataloader: DataLoader,
         logger=None,
-        tensorboard_path=None,
     ):
-        if os.path.exists(checkpoint_dir) and os.listdir(checkpoint_dir):
+        if os.path.exists(self.checkpoint_dir) and os.listdir(self.checkpoint_dir):
             raise ValueError("Checkpoint directory already exists")
         else:
-            os.makedirs(checkpoint_dir, exist_ok=True)
+            os.makedirs(self.checkpoint_dir, exist_ok=True)
+
+        if logger:
+            logger.info(
+                f"Training ASPS model with {self.iters} iterations on dataset {dataloader.dataset.__class__.__name__}"
+            )
 
         lmbda = 0.1
-        self.model.to(self.device)
+        model.to(self.device)
 
         dataloader = sample_data(dataloader)
-        writer = SummaryWriter(tensorboard_path) if tensorboard_path else None
+        writer = SummaryWriter(self.tensorboard_path) if self.tensorboard_path else None
 
-        pbar = tqdm(range(1, iters + 1))
+        optimizer = self.optimizer(params=model.parameters())
+
+        pbar = tqdm(range(1, self.iters + 1))
 
         for itr in pbar:
-            self.model.network.train()
+            model.network.train()
 
             img, gt, _ = next(dataloader)
             img, gt = img.to(self.device), gt.to(self.device)
@@ -67,7 +79,7 @@ class ASPSTrainer:
             # Resize gt to match the mask output
             gt = torch.stack([Resize(256)(x) for x in gt])
 
-            pred, iou_pred, uncertainty_p = self.model(img, multimask_output=False)
+            pred, iou_pred, uncertainty_p = model(img, multimask_output=False)
 
             # U_p + U_i
             ones = torch.ones_like(iou_pred)
@@ -87,19 +99,19 @@ class ASPSTrainer:
                 + (1 - b[:, :, None, None]) * pred
             )
 
-            self.optimizer.zero_grad()
+            optimizer.zero_grad()
             confidence_loss = torch.mean(-torch.log(confidence))
             loss = self.seg_loss(pred_new, gt) + lmbda * confidence_loss
 
-            if budget > confidence_loss.item():
+            if self.budget > confidence_loss.item():
                 lmbda /= 1.01
-            elif budget < confidence_loss.item():
+            elif self.budget < confidence_loss.item():
                 lmbda /= 0.99
 
             loss.backward()
 
-            nn.utils.clip_grad_norm_(self.model.network.parameters(), clipping)
-            self.optimizer.step()
+            nn.utils.clip_grad_norm_(model.network.parameters(), self.clipping)
+            optimizer.step()
             pbar.set_postfix(loss=loss.item())
             pbar.update(1)
 
@@ -107,10 +119,12 @@ class ASPSTrainer:
                 writer.add_scalar("loss", loss.item(), itr)
                 writer.add_scalar("confidence_loss", confidence_loss.item(), itr)
 
-            if itr >= save_iter * 25 and (itr % save_iter == 0 or iter == iters - 1):
+            if itr >= self.save_iter * 25 and (
+                itr % self.save_iter == 0 or iter == self.iters - 1
+            ):
                 torch.save(
-                    self.model.state_dict(),
-                    f"{checkpoint_dir}/model_{str(iter).zfill(7)}.pth",
+                    model.state_dict(),
+                    f"{self.checkpoint_dir}/model_{str(itr).zfill(7)}.pth",
                 )
 
                 if logger:
@@ -119,12 +133,12 @@ class ASPSTrainer:
         if writer:
             writer.close()
 
-    def test(self, dataloader):
-        self.model.eval()
+    def test(self, model: ASPS, dataloader: DataLoader):
+        model.eval()
 
         fps = []
         num_frames = 0
-        dice, iou = [], []
+        dice, iou = []
 
         t0 = time.time()
         for img, gt, _ in dataloader:
@@ -132,7 +146,7 @@ class ASPSTrainer:
 
             with torch.no_grad():
                 t1 = time.time()
-                pred, _, _ = self.model(img, multimask_output=False)
+                pred, _, _ = model(img, multimask_output=False)
                 fps.append(img.size(0) / (time.time() - t1))
 
             pred = pred > 0.5
