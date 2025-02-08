@@ -66,12 +66,14 @@ class ASPSTrainer:
         dataloader = sample_data(dataloader)
         writer = SummaryWriter(self.tensorboard_path) if self.tensorboard_path else None
 
-        optimizer = self.optimizer(params=model.parameters())
+        optimizer = self.optimizer(
+            params=[p for n, p in model.named_parameters() if not n.startswith("vit")]
+        )
 
         pbar = tqdm(range(1, self.iters + 1))
 
         for itr in pbar:
-            model.network.train()
+            model.train()
 
             img, gt, _ = next(dataloader)
             img, gt = img.to(self.device), gt.to(self.device)
@@ -86,8 +88,8 @@ class ASPSTrainer:
             confidence = (iou_pred + (ones - uncertainty_p.mean(dim=(2, 3)))) / 2
 
             eps = 1e-12
-            pred = torch.clamp(pred, 0.0 + eps, 1 - eps)
-            confidence = torch.clamp(confidence, 0.0 + eps, 1 - eps)
+            pred = torch.clamp(pred, eps, 1.0 - eps)
+            confidence = torch.clamp(confidence, eps, 1.0 - eps)
 
             # Hint module
             b = torch.bernoulli(torch.Tensor(confidence.size()).uniform_(0, 1))
@@ -110,7 +112,9 @@ class ASPSTrainer:
 
             loss.backward()
 
-            nn.utils.clip_grad_norm_(model.network.parameters(), self.clipping)
+            nn.utils.clip_grad_norm_(
+                [p for n, p in model.named_parameters() if not n.startswith("vit")], self.clipping
+            )
             optimizer.step()
             pbar.set_postfix(loss=loss.item())
             pbar.update(1)
@@ -123,7 +127,7 @@ class ASPSTrainer:
                 itr % self.save_iter == 0 or iter == self.iters - 1
             ):
                 torch.save(
-                    model.state_dict(),
+                    model,
                     f"{self.checkpoint_dir}/model_{str(itr).zfill(7)}.pth",
                 )
 
@@ -133,15 +137,16 @@ class ASPSTrainer:
         if writer:
             writer.close()
 
-    def test(self, model: ASPS, dataloader: DataLoader):
+    def eval(self, model: ASPS, dataloader: DataLoader):
         model.eval()
 
         fps = []
         num_frames = 0
-        dice, iou = []
+        dice, iou = [], []
 
         t0 = time.time()
-        for img, gt, _ in dataloader:
+        for img, gt, _ in tqdm(dataloader):
+            gt = torch.stack([Resize(256)(x) for x in gt])
             img, gt = img.to(self.device), gt.to(self.device)
 
             with torch.no_grad():

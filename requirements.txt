@@ -12,6 +12,7 @@ hydra-colorlog
 tqdm
 rootutils
 pre-commit
+prettytable
 
 onnx
 onnxruntime

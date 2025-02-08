@@ -12,7 +12,7 @@ experiment_dir: ??? # Must be inputted by the user
 
 trainer:
   _target_: trainers.asps.ASPSTrainer
-  device: cuda:0
+  device: cuda
   iters: null
   checkpoint_dir: ${experiment_dir}/checkpoints
   save_iter: null
@@ -23,9 +23,7 @@ trainer:
 
 dataloader:
   _target_: torch.utils.data.DataLoader
-  _partial_: true
-  batch_size: 4
-  shuffle: true
+  batch_size: 1
   num_workers: 4
   pin_memory: true
 
